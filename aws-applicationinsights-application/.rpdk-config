@@ -1,0 +1,16 @@
+{
+    "typeName": "AWS::ApplicationInsights::Application",
+    "language": "java",
+    "runtime": "java8",
+    "entrypoint": "software.amazon.applicationinsights.application.HandlerWrapper::handleRequest",
+    "testEntrypoint": "software.amazon.applicationinsights.application.HandlerWrapper::testEntrypoint",
+    "settings": {
+        "namespace": [
+            "software",
+            "amazon",
+            "applicationinsights",
+            "application"
+        ],
+        "codegen_template_path": "default"
+    }
+}
