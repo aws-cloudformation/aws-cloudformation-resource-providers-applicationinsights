@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  This CloudFormation template creates a role assumed by CloudFormation
+  during CRUDL operations to mutate resources on behalf of the customer.
+
+Resources:
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      MaxSessionDuration: 8400
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: resources.cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: ResourceTypePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                - "applicationinsights:CreateApplication"
+                - "applicationinsights:CreateComponent"
+                - "applicationinsights:CreateLogPattern"
+                - "applicationinsights:DeleteApplication"
+                - "applicationinsights:DeleteComponent"
+                - "applicationinsights:DeleteLogPattern"
+                - "applicationinsights:DescribeApplication"
+                - "applicationinsights:DescribeComponent"
+                - "applicationinsights:DescribeComponentConfiguration"
+                - "applicationinsights:DescribeComponentConfigurationRecommendation"
+                - "applicationinsights:DescribeLogPattern"
+                - "applicationinsights:ListApplications"
+                - "applicationinsights:ListComponents"
+                - "applicationinsights:ListLogPatternSets"
+                - "applicationinsights:ListLogPatterns"
+                - "applicationinsights:ListTagsForResource"
+                - "applicationinsights:TagResource"
+                - "applicationinsights:UntagResource"
+                - "applicationinsights:UpdateApplication"
+                - "applicationinsights:UpdateComponentConfiguration"
+                - "applicationinsights:UpdateLogPattern"
+                Resource: "*"
+Outputs:
+  ExecutionRoleArn:
+    Value:
+      Fn::GetAtt: ExecutionRole.Arn

@@ -1,0 +1,11 @@
+{
+  "ResourceGroupName": "contract-test-resource-group",
+  "CWEMonitorEnabled": true,
+  "OpsCenterEnabled": false,
+  "Tags": [
+    {
+      "Key": "key1",
+      "Value": "new_value1"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "ResourceGroupName": "contract-test-resource-group-2",
+  "ApplicationARN": "arn:aws:applicationinsights:us-east-1:665361112979:application/resource-group/contract-test-resource-group"
+}
