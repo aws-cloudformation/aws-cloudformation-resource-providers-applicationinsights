@@ -38,6 +38,7 @@ import software.amazon.awssdk.services.applicationinsights.model.UpdateLogPatter
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -195,7 +196,7 @@ public class HandlerHelper {
             ResourceModel model,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient,
-            Logger logger) throws JsonProcessingException {
+            Logger logger) throws IOException {
         String mode = componentMonitoringSetting.getComponentConfigurationMode();
         String componentNameOrArn = getComponentNameOrARNFromComponentMonitoringSetting(componentMonitoringSetting);
 
@@ -271,7 +272,7 @@ public class HandlerHelper {
             ResourceModel model,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient,
-            Logger logger) throws JsonProcessingException {
+            Logger logger) throws IOException {
         DescribeComponentConfigurationRecommendationResponse describeComponentConfigurationRecommendationResponse =
                 proxy.injectCredentialsAndInvokeV2(DescribeComponentConfigurationRecommendationRequest.builder()
                                 .resourceGroupName(model.getResourceGroupName())
