@@ -42,7 +42,6 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
                 callbackContext;
 
         model.setApplicationARN(String.format("arn:aws:applicationinsights:%s:%s:application/resource-group/%s",
-//                request.getAwsPartition(),
                 request.getRegion(),
                 request.getAwsAccountId(),
                 model.getResourceGroupName()));

@@ -23,8 +23,6 @@ import static software.amazon.applicationinsights.application.Constants.WAIT_CAL
 
 public class UpdateHandler extends BaseHandler<CallbackContext> {
     static final int UPDATE_STATUS_POLL_RETRIES = 60;
-    static final int MAX_DELETE_TAG_BATCH_SIZE = 200;
-    static final int MAX_CREATE_TAG_BATCH_SIZE = 200;
     static final String UPDATE_TIMED_OUT_MESSAGE = "Timed out waiting for application update.";
 
     private final ApplicationInsightsClient applicationInsightsClient = ApplicationInsightsClient.create();
@@ -74,7 +72,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
             } else {
                 DescribeApplicationResponse response;
                 try {
-                    response = HandlerHelper.describeApplicationInsightsApplication(model, proxy, applicationInsightsClient);
+                    response = HandlerHelper.describeApplicationInsightsApplication(model.getResourceGroupName(), proxy, applicationInsightsClient);
                 } catch (Exception ex) {
                     logger.log(String.format("describeApplicationInsightsApplication failed with exception %s", ex.getMessage()));
                     return ProgressEvent.defaultFailureHandler(ex, ExceptionMapper.mapToHandlerErrorCode(ex));
@@ -142,7 +140,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         } else if (currentStep.equals(Step.APP_UPDATE.name())) {
             DescribeApplicationResponse response;
             try {
-                response = HandlerHelper.describeApplicationInsightsApplication(model, proxy, applicationInsightsClient);
+                response = HandlerHelper.describeApplicationInsightsApplication(model.getResourceGroupName(), proxy, applicationInsightsClient);
             } catch (Exception ex) {
                 logger.log(String.format("describeApplicationInsightsApplication failed with exception %s", ex.getMessage()));
                 return ProgressEvent.defaultFailureHandler(ex, ExceptionMapper.mapToHandlerErrorCode(ex));

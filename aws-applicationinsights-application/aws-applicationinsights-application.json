@@ -499,6 +499,10 @@
     "readOnlyProperties": [
         "/properties/ApplicationARN"
     ],
+    "writeOnlyProperties": [
+        "/properties/AutoConfigurationEnabled",
+        "/properties/ComponentMonitoringSettings"
+    ],
     "createOnlyProperties": [
         "/properties/ResourceGroupName"
     ],
@@ -518,7 +522,13 @@
         },
         "read": {
             "permissions": [
-                "applicationinsights:DescribeApplication"
+                "applicationinsights:DescribeApplication",
+                "applicationinsights:ListTagsForResource",
+                "applicationinsights:DescribeComponent",
+                "applicationinsights:ListComponents",
+                "applicationinsights:DescribeLogPattern",
+                "applicationinsights:ListLogPatterns",
+                "applicationinsights:ListLogPatternSets"
             ]
         },
         "update": {
@@ -552,7 +562,14 @@
         },
         "list": {
             "permissions": [
-                "applicationinsights:ListApplications"
+                "applicationinsights:ListApplications",
+                "applicationinsights:DescribeApplication",
+                "applicationinsights:ListTagsForResource",
+                "applicationinsights:DescribeComponent",
+                "applicationinsights:ListComponents",
+                "applicationinsights:DescribeLogPattern",
+                "applicationinsights:ListLogPatterns",
+                "applicationinsights:ListLogPatternSets"
             ]
         }
     }
