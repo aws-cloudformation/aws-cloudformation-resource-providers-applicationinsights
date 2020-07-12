@@ -60,14 +60,11 @@ public class HandlerHelper {
     private static final String DEFAULT_WITH_OVERWRITE_COMPONENT_CONFIG_MODE = "DEFAULT_WITH_OVERWRITE";
 
     public static boolean doesApplicationExist(
-            ResourceModel model,
+            String resourceGroupName,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient) {
         try {
-            proxy.injectCredentialsAndInvokeV2(DescribeApplicationRequest.builder()
-                            .resourceGroupName(model.getResourceGroupName())
-                            .build(),
-                    applicationInsightsClient::describeApplication);
+            describeApplicationInsightsApplication(resourceGroupName, proxy, applicationInsightsClient);
             return true;
         } catch (ResourceNotFoundException e) {
             return false;
@@ -75,15 +72,12 @@ public class HandlerHelper {
     }
 
     public static String getApplicationLifeCycle(
-            ResourceModel model,
+            String resourceGroupName,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient) {
-        DescribeApplicationResponse response = proxy.injectCredentialsAndInvokeV2(DescribeApplicationRequest.builder()
-                        .resourceGroupName(model.getResourceGroupName())
-                        .build(),
-                applicationInsightsClient::describeApplication);
-
-        return response.applicationInfo().lifeCycle();
+        return describeApplicationInsightsApplication(resourceGroupName, proxy, applicationInsightsClient)
+                .applicationInfo()
+                .lifeCycle();
     }
 
     public static void createApplicationInsightsApplication(

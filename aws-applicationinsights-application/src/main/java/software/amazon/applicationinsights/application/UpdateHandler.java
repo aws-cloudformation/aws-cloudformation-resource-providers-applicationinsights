@@ -53,7 +53,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
         }
 
         if (currentStep == null) {
-            if (!HandlerHelper.doesApplicationExist(model, proxy, applicationInsightsClient)) {
+            if (!HandlerHelper.doesApplicationExist(model.getResourceGroupName(), proxy, applicationInsightsClient)) {
                 // recreate the application if it's deleted
                 try {
                     HandlerHelper.createApplicationInsightsApplication(model, proxy, applicationInsightsClient);
@@ -111,7 +111,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
                 }
             }
         } else if (currentStep.equals(Step.APP_CREATION.name())) {
-            String currentApplicationLifeCycle = HandlerHelper.getApplicationLifeCycle(model, proxy, applicationInsightsClient);
+            String currentApplicationLifeCycle = HandlerHelper.getApplicationLifeCycle(model.getResourceGroupName(), proxy, applicationInsightsClient);
             if (currentApplicationLifeCycle.equals(APP_CREATION_FINISHED_LIFECYCLE)) {
                 // APP_CREATION step finished, since tag creation is already done, start COMPONENT_DELETION step
                 List<String> customCompnentNamesToDelete = new ArrayList<>();
@@ -715,7 +715,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
                             model);
                 }
             } else {
-                String currentApplicationLifeCycle = HandlerHelper.getApplicationLifeCycle(model, proxy, applicationInsightsClient);
+                String currentApplicationLifeCycle = HandlerHelper.getApplicationLifeCycle(model.getResourceGroupName(), proxy, applicationInsightsClient);
                 if (currentApplicationLifeCycle.equals(CONFIGURATION_FINISHED_LIFECYCLE)) {
                     Set<String> newProcessedItems = new HashSet<>(newCallbackContext.getProcessedItems());
                     newProcessedItems.add(processingItem);
@@ -770,7 +770,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
                             model);
                 }
             } else {
-                String currentApplicationLifeCycle = HandlerHelper.getApplicationLifeCycle(model, proxy, applicationInsightsClient);
+                String currentApplicationLifeCycle = HandlerHelper.getApplicationLifeCycle(model.getResourceGroupName(), proxy, applicationInsightsClient);
                 if (currentApplicationLifeCycle.equals(CONFIGURATION_FINISHED_LIFECYCLE)) {
                     return ProgressEvent.defaultInProgressHandler(
                             CallbackContext.builder()

@@ -10,7 +10,7 @@ public class ExceptionMapper {
      * Translates Application Insights' client exception to a Cfn Handler Error Code.
      * Ref: https://w.amazon.com/bin/view/AWS21/Design/Uluru/HandlerContract
      */
-    static HandlerErrorCode mapToHandlerErrorCode(final Exception exception) {
+    public static HandlerErrorCode mapToHandlerErrorCode(final Exception exception) {
         if (exception instanceof ResourceInUseException) {
             return HandlerErrorCode.ResourceConflict;
         } else if (exception instanceof ResourceNotFoundException) {

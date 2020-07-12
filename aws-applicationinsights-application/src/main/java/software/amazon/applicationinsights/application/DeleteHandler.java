@@ -29,7 +29,7 @@ public class DeleteHandler extends BaseHandler<CallbackContext> {
                 callbackContext;
 
         if (callbackContext == null) {
-            if (!HandlerHelper.doesApplicationExist(model, proxy, applicationInsightsClient)) {
+            if (!HandlerHelper.doesApplicationExist(model.getResourceGroupName(), proxy, applicationInsightsClient)) {
                 // Check if application is already deleted before the call
                 return ProgressEvent.defaultSuccessHandler(model);
             } else {
@@ -41,7 +41,7 @@ public class DeleteHandler extends BaseHandler<CallbackContext> {
             throw new RuntimeException(TIMED_OUT_MESSAGE);
         }
 
-        if (!HandlerHelper.doesApplicationExist(model, proxy, applicationInsightsClient)) {
+        if (!HandlerHelper.doesApplicationExist(model.getResourceGroupName(), proxy, applicationInsightsClient)) {
             return ProgressEvent.defaultSuccessHandler(model);
         } else {
             return ProgressEvent.defaultInProgressHandler(

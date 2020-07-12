@@ -1,5 +1,6 @@
 package software.amazon.applicationinsights.application;
 
+import software.amazon.applicationinsights.application.StepWorkflow.AppCreationStepWorkflow;
 import software.amazon.awssdk.services.applicationinsights.ApplicationInsightsClient;
 import software.amazon.awssdk.services.applicationinsights.model.ResourceInUseException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
@@ -47,7 +48,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
                 model.getResourceGroupName()));
 
         // check if application is already created for resource group before the call
-        if (callbackContext == null && HandlerHelper.doesApplicationExist(model, proxy, applicationInsightsClient)) {
+        if (callbackContext == null && HandlerHelper.doesApplicationExist(model.getResourceGroupName(), proxy, applicationInsightsClient)) {
             final Exception ex = ResourceInUseException.builder()
                     .message("Application Insights application already exists for resource group: " + model.getResourceGroupName())
                     .build();
@@ -59,6 +60,47 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         if (newCallbackContext.getStabilizationRetriesRemaining() == 0) {
             throw new RuntimeException(CREATE_TIMED_OUT_MESSAGE);
         }
+
+
+//        if (currentStep == null) {
+//            try {
+//                HandlerHelper.createApplicationInsightsApplication(model, proxy, applicationInsightsClient);
+//            } catch (Exception ex) {
+//                logger.log(String.format("createApplicationInsightsApplication failed with exception %s", ex.getMessage()));
+//                return ProgressEvent.defaultFailureHandler(ex, ExceptionMapper.mapToHandlerErrorCode(ex));
+//            }
+//
+//            return ProgressEvent.defaultInProgressHandler(
+//                    CallbackContext.builder()
+//                            .currentStep(Step.APP_CREATION.name())
+//                            .stabilizationRetriesRemaining(newCallbackContext.getStabilizationRetriesRemaining())
+//                            .build(),
+//                    WAIT_CALLBACK_DELAY_SECONDS,
+//                    model);
+//        } else if (currentStep.equals(Step.APP_CREATION.name())) {
+//            String currentApplicationLifeCycle = HandlerHelper.getApplicationLifeCycle(model, proxy, applicationInsightsClient);
+//            if (currentApplicationLifeCycle.equals(APP_CREATION_FINISHED_LIFECYCLE)) {
+//                // APP_CREATION step finished, start COMPONENT_CREATION step
+//                return ProgressEvent.defaultInProgressHandler(
+//                        CallbackContext.builder()
+//                                .currentStep(Step.COMPONENT_CREATION.name())
+//                                .processedItems(new HashSet<>())
+//                                .stabilizationRetriesRemaining(newCallbackContext.getStabilizationRetriesRemaining())
+//                                .build(),
+//                        TRANSITION_CALLBACK_DELAY_SECONDS,
+//                        model);
+//
+//            } else {
+//                return ProgressEvent.defaultInProgressHandler(
+//                        CallbackContext.builder()
+//                                .currentStep(Step.APP_CREATION.name())
+//                                .stabilizationRetriesRemaining(newCallbackContext.getStabilizationRetriesRemaining() - 1)
+//                                .build(),
+//                        WAIT_CALLBACK_DELAY_SECONDS,
+//                        model);
+//            }
+//        }
+
 
         if (currentStep == null) {
             try {
@@ -72,32 +114,31 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
                     CallbackContext.builder()
                             .currentStep(Step.APP_CREATION.name())
                             .stabilizationRetriesRemaining(newCallbackContext.getStabilizationRetriesRemaining())
+                            .processingItem(model.getResourceGroupName())
+                            .unprocessedItems(null)
                             .build(),
-                    WAIT_CALLBACK_DELAY_SECONDS,
+                    Step.APP_CREATION.getCallBackWaitSeconds(),
                     model);
         } else if (currentStep.equals(Step.APP_CREATION.name())) {
-            String currentApplicationLifeCycle = HandlerHelper.getApplicationLifeCycle(model, proxy, applicationInsightsClient);
-            if (currentApplicationLifeCycle.equals(APP_CREATION_FINISHED_LIFECYCLE)) {
-                // APP_CREATION step finished, start COMPONENT_CREATION step
-                return ProgressEvent.defaultInProgressHandler(
-                        CallbackContext.builder()
-                                .currentStep(Step.COMPONENT_CREATION.name())
-                                .processedItems(new HashSet<>())
-                                .stabilizationRetriesRemaining(newCallbackContext.getStabilizationRetriesRemaining())
-                                .build(),
-                        TRANSITION_CALLBACK_DELAY_SECONDS,
-                        model);
+            ProgressEvent<ResourceModel, CallbackContext> componentCreationStepInitProgressEvent =
+                    ProgressEvent.defaultInProgressHandler(
+                            CallbackContext.builder()
+                                    .currentStep(Step.COMPONENT_CREATION.name())
+                                    .stabilizationRetriesRemaining(newCallbackContext.getStabilizationRetriesRemaining())
+                                    .processingItem(null)
+                                    .processedItems(new HashSet<>())
+                                    .build(),
+                            TRANSITION_CALLBACK_DELAY_SECONDS,
+                            model);
 
-            } else {
-                return ProgressEvent.defaultInProgressHandler(
-                        CallbackContext.builder()
-                                .currentStep(Step.APP_CREATION.name())
-                                .stabilizationRetriesRemaining(newCallbackContext.getStabilizationRetriesRemaining() - 1)
-                                .build(),
-                        WAIT_CALLBACK_DELAY_SECONDS,
-                        model);
-            }
-        } else if (currentStep.equals(Step.COMPONENT_CREATION.name())) {
+            return new AppCreationStepWorkflow(model, callbackContext, proxy, applicationInsightsClient, logger, componentCreationStepInitProgressEvent)
+                    .execute();
+        }
+
+
+
+
+        else if (currentStep.equals(Step.COMPONENT_CREATION.name())) {
             String processingItem = newCallbackContext.getProcessingItem();
             if (processingItem == null) {
                 // pick the next custom component to create
@@ -271,7 +312,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
                             model);
                 }
             } else {
-                String currentApplicationLifeCycle = HandlerHelper.getApplicationLifeCycle(model, proxy, applicationInsightsClient);
+                String currentApplicationLifeCycle = HandlerHelper.getApplicationLifeCycle(model.getResourceGroupName(), proxy, applicationInsightsClient);
                 if (currentApplicationLifeCycle.equals(CONFIGURATION_FINISHED_LIFECYCLE)) {
                     Set<String> newProcessedItems = new HashSet<>(newCallbackContext.getProcessedItems());
                     newProcessedItems.add(processingItem);
@@ -300,7 +341,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
             String processingItem = newCallbackContext.getProcessingItem();
             if (processingItem == null) {
                 // pick the next component for default configuration
-                String nextAutoConfigComponentNameOrARN = HandlerHelper.pickNextConfigurationComponent(callbackContext);
+                String nextAutoConfigComponentNameOrARN = HandlerHelper.pickNextConfigurationComponent(newCallbackContext);
 
                 if (nextAutoConfigComponentNameOrARN == null) {
                     return ProgressEvent.defaultSuccessHandler(model);
@@ -326,7 +367,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
                             model);
                 }
             } else {
-                String currentApplicationLifeCycle = HandlerHelper.getApplicationLifeCycle(model, proxy, applicationInsightsClient);
+                String currentApplicationLifeCycle = HandlerHelper.getApplicationLifeCycle(model.getResourceGroupName(), proxy, applicationInsightsClient);
                 if (currentApplicationLifeCycle.equals(CONFIGURATION_FINISHED_LIFECYCLE)) {
                     return ProgressEvent.defaultInProgressHandler(
                             CallbackContext.builder()
