@@ -1,7 +1,6 @@
 package software.amazon.applicationinsights.application.StepWorkflow;
 
 import software.amazon.applicationinsights.application.CallbackContext;
-import software.amazon.applicationinsights.application.ExceptionMapper;
 import software.amazon.applicationinsights.application.HandlerHelper;
 import software.amazon.applicationinsights.application.ResourceModel;
 import software.amazon.awssdk.services.applicationinsights.ApplicationInsightsClient;
@@ -9,9 +8,12 @@ import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 
-import static software.amazon.applicationinsights.application.Constants.APP_CREATION_FINISHED_LIFECYCLE;
+import java.io.IOException;
 
-public class AppCreationStepWorkflow extends BaseStepWorkflow {
+import static software.amazon.applicationinsights.application.Constants.CONFIGURATION_FINISHED_LIFECYCLE;
+import static software.amazon.applicationinsights.application.Constants.DEFAULT_TIER;
+
+public class DefaultComponentConfigurationStepWorkflow extends BaseStepWorkflow {
 
     private ResourceModel model;
     private CallbackContext callbackContext;
@@ -20,7 +22,7 @@ public class AppCreationStepWorkflow extends BaseStepWorkflow {
     private Logger logger;
     private ProgressEvent<ResourceModel, CallbackContext> nextStepInitProgressEvent;
 
-    public AppCreationStepWorkflow(
+    public DefaultComponentConfigurationStepWorkflow(
             final ResourceModel model,
             final CallbackContext callbackContext,
             final AmazonWebServicesClientProxy proxy,
@@ -32,24 +34,24 @@ public class AppCreationStepWorkflow extends BaseStepWorkflow {
 
     @Override
     protected boolean isCurrentItemProcessFinished(
-            String resourceGroupName,
+            String componentName,
             ResourceModel model,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient,
             Logger logger) {
-        return HandlerHelper.describeApplicationInsightsApplication(resourceGroupName, proxy, applicationInsightsClient)
+        return HandlerHelper.describeApplicationInsightsApplication(model.getResourceGroupName(), proxy, applicationInsightsClient)
                 .applicationInfo()
                 .lifeCycle()
-                .equals(APP_CREATION_FINISHED_LIFECYCLE);
+                .equals(CONFIGURATION_FINISHED_LIFECYCLE);
     }
 
     @Override
     protected void startProcessNextItem(
-            String resourceGroupName,
+            String componentName,
             ResourceModel model,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient,
-            Logger logger) {
-        HandlerHelper.createApplicationInsightsApplication(model, proxy, applicationInsightsClient);
+            Logger logger) throws IOException {
+        HandlerHelper.createDefaultComponentConfiguration(componentName, DEFAULT_TIER, model, proxy, applicationInsightsClient, logger);
     }
 }

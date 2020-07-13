@@ -134,11 +134,11 @@ public class HandlerHelper {
 
     public static void createCustomComponent(
             CustomComponent customComponent,
-            ResourceModel model,
+            String resourceGroupName,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient) {
         proxy.injectCredentialsAndInvokeV2(CreateComponentRequest.builder()
-                        .resourceGroupName(model.getResourceGroupName())
+                        .resourceGroupName(resourceGroupName)
                         .componentName(customComponent.getComponentName())
                         .resourceList(customComponent.getResourceList())
                         .build(),
@@ -165,11 +165,11 @@ public class HandlerHelper {
     public static void createLogPattern(
             String patternSetName,
             LogPattern logPattern,
-            ResourceModel model,
+            String resourceGroupName,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient) {
         proxy.injectCredentialsAndInvokeV2(CreateLogPatternRequest.builder()
-                        .resourceGroupName(model.getResourceGroupName())
+                        .resourceGroupName(resourceGroupName)
                         .patternSetName(patternSetName)
                         .patternName(logPattern.getPatternName())
                         .pattern(logPattern.getPattern())
@@ -686,15 +686,6 @@ public class HandlerHelper {
         return null;
     }
 
-    public static List<String> getConfiguredComponentNames(ResourceModel model) {
-        return model.getComponentMonitoringSettings() == null ?
-                new ArrayList<>() :
-                model.getComponentMonitoringSettings().stream()
-                        .map(componentMonitoringSetting ->
-                                HandlerHelper.getComponentNameOrARNFromComponentMonitoringSetting(componentMonitoringSetting))
-                        .collect(Collectors.toList());
-    }
-
     public static String pickNextConfigurationComponent(CallbackContext callbackContext) {
         List<String> unprocessedDefaultConfiguationComponents = callbackContext.getUnprocessedItems();
         return (unprocessedDefaultConfiguationComponents == null || unprocessedDefaultConfiguationComponents.isEmpty()) ?
@@ -825,5 +816,41 @@ public class HandlerHelper {
                         .nextToken(nextToken)
                         .build(),
                 applicationInsightsClient::listApplications);
+    }
+
+    public static List<String> getAllCustomComponentNamesToCreate(ResourceModel model) {
+        return Optional.ofNullable(model.getCustomComponents()).orElse(Collections.emptyList())
+                .stream()
+                .map(customComponent -> customComponent.getComponentName())
+                .collect(Collectors.toList());
+    }
+
+    public static List<String> getAllLogPatternIdentifiersToCreate(ResourceModel model) {
+        List<String> logPatternIdentifiers = new ArrayList<>();
+
+        if (model.getLogPatternSets() == null || model.getLogPatternSets().isEmpty()) {
+            return logPatternIdentifiers;
+        }
+
+        for (LogPatternSet logPatternSet : model.getLogPatternSets()) {
+            String patternSetName = logPatternSet.getPatternSetName();
+            for (LogPattern logPattern : logPatternSet.getLogPatterns()) {
+                String patternName = logPattern.getPatternName();
+                logPatternIdentifiers.add(generateLogPatternIdentifier(patternSetName, patternName));
+            }
+        }
+
+        return logPatternIdentifiers;
+    }
+
+    public static List<String> getAllComponentNamesWithMonitoringSettings(ResourceModel model, Logger logger) {
+        logger.log("ComponentMonitoringSettings: " + model.getComponentMonitoringSettings().toString());
+
+        return model.getComponentMonitoringSettings() == null ?
+                new ArrayList<>() :
+                model.getComponentMonitoringSettings().stream()
+                        .map(componentMonitoringSetting ->
+                                HandlerHelper.getComponentNameOrARNFromComponentMonitoringSetting(componentMonitoringSetting))
+                        .collect(Collectors.toList());
     }
 }

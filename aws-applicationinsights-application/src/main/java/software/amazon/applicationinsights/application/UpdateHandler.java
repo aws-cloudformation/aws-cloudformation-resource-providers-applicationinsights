@@ -400,7 +400,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
                             model);
                 } else {
                     try {
-                        HandlerHelper.createCustomComponent(nextCustomComponentToCreate, model, proxy, applicationInsightsClient);
+                        HandlerHelper.createCustomComponent(nextCustomComponentToCreate, model.getResourceGroupName(), proxy, applicationInsightsClient);
                     } catch (Exception ex) {
                         logger.log(String.format("createCustomComponent failed with exception %s", ex.getMessage()));
                         return ProgressEvent.defaultFailureHandler(ex, ExceptionMapper.mapToHandlerErrorCode(ex));
@@ -537,7 +537,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
                             model);
                     try {
                         HandlerHelper.createLogPattern(
-                                nextSetPatternNamesToCreate.split(":")[0], nextLogPatternToCreate, model, proxy, applicationInsightsClient);
+                                nextSetPatternNamesToCreate.split(":")[0], nextLogPatternToCreate, model.getResourceGroupName(), proxy, applicationInsightsClient);
                     } catch (Exception ex) {
                         logger.log(String.format("createLogPattern failed with exception %s", ex.getMessage()));
                         return ProgressEvent.defaultFailureHandler(ex, ExceptionMapper.mapToHandlerErrorCode(ex));
@@ -669,7 +669,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
 
                     List<String> autoConfigComponentNames = HandlerHelper.getApplicationAllComponentNames(
                             model, proxy, applicationInsightsClient);
-                    List<String> configuredComponentNames = HandlerHelper.getConfiguredComponentNames(model);
+                    List<String> configuredComponentNames = HandlerHelper.getAllComponentNamesWithMonitoringSettings(model, logger);
                     autoConfigComponentNames.removeAll(configuredComponentNames);
 
                     if (autoConfigComponentNames != null && !autoConfigComponentNames.isEmpty()) {

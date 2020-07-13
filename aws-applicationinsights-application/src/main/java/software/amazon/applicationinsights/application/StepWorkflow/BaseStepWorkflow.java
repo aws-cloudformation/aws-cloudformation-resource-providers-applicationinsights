@@ -9,6 +9,7 @@ import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 
+import java.io.IOException;
 import java.util.List;
 
 import static software.amazon.applicationinsights.application.Constants.TRANSITION_CALLBACK_DELAY_SECONDS;
@@ -112,7 +113,7 @@ public abstract class BaseStepWorkflow {
             ResourceModel model,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient,
-            Logger logger);
+            Logger logger) throws IOException;
 
     private String pickNextItemToProcess(CallbackContext callbackContext) {
         List<String> unProcessedItems = callbackContext.getUnprocessedItems();

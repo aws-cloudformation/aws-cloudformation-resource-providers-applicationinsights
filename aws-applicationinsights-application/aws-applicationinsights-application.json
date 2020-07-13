@@ -499,10 +499,6 @@
     "readOnlyProperties": [
         "/properties/ApplicationARN"
     ],
-    "writeOnlyProperties": [
-        "/properties/AutoConfigurationEnabled",
-        "/properties/ComponentMonitoringSettings"
-    ],
     "createOnlyProperties": [
         "/properties/ResourceGroupName"
     ],
