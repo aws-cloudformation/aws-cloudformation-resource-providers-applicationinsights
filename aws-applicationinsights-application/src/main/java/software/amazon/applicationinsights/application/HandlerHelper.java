@@ -71,15 +71,6 @@ public class HandlerHelper {
         }
     }
 
-    public static String getApplicationLifeCycle(
-            String resourceGroupName,
-            AmazonWebServicesClientProxy proxy,
-            ApplicationInsightsClient applicationInsightsClient) {
-        return describeApplicationInsightsApplication(resourceGroupName, proxy, applicationInsightsClient)
-                .applicationInfo()
-                .lifeCycle();
-    }
-
     public static void createApplicationInsightsApplication(
             ResourceModel model,
             AmazonWebServicesClientProxy proxy,
@@ -351,14 +342,14 @@ public class HandlerHelper {
                 applicationInsightsClient::updateApplication);
     }
 
-    public static void getTagKeysToDeleteAndCreate(
-            List<String> tagKeysToDelete,
-            List<String> tagKeysToCreate,
+    public static List<String> getTagKeysToDelete(
             ResourceModel model,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient) {
         Set<Tag> appTags = new HashSet<>(getApplicationTags(model.getApplicationARN(), proxy, applicationInsightsClient));
         Set<Tag> modelTags = translateModelTagsToSdkTags(model.getTags());
+
+        List<String> tagKeysToDelete = new ArrayList<>();
 
         for (Tag appTag : appTags) {
             if (!modelTags.contains(appTag)) {
@@ -366,11 +357,25 @@ public class HandlerHelper {
             }
         }
 
+        return tagKeysToDelete;
+    }
+
+    public static List<String> getTagKeysToCreate(
+            ResourceModel model,
+            AmazonWebServicesClientProxy proxy,
+            ApplicationInsightsClient applicationInsightsClient) {
+        Set<Tag> appTags = new HashSet<>(getApplicationTags(model.getApplicationARN(), proxy, applicationInsightsClient));
+        Set<Tag> modelTags = translateModelTagsToSdkTags(model.getTags());
+
+        List<String> tagKeysToCreate = new ArrayList<>();
+
         for (Tag modelTag : modelTags) {
             if (!appTags.contains(modelTag)) {
                 tagKeysToCreate.add(modelTag.key());
             }
         }
+
+        return tagKeysToCreate;
     }
 
     private static List<Tag> getApplicationTags(
@@ -450,20 +455,31 @@ public class HandlerHelper {
         return appTags.containsAll(translateModelTagsToSdkTags(tagsToCheck));
     }
 
-    public static void getCustomComponentNamesToDeleteAndCreate(
-            List<String> customCompnentNamesToDelete,
-            List<String> customCompnentNamesToCreate,
+    public static List<String> getCustomComponentNamesToCreate(
             ResourceModel model,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient,
             Logger logger) {
-        ListComponentsResponse listComponentsResponse = listApplicationComponents(model.getResourceGroupName(), proxy, applicationInsightsClient);
-        List<ApplicationComponent> appComponents = listComponentsResponse.applicationComponentList().stream()
-                .filter(component -> component.resourceType().equals("CustomComponent"))
+        List<String> appComponentNames = getAppCustomComponentNames(model.getResourceGroupName(), proxy, applicationInsightsClient);
+        logger.log("app component names: " + appComponentNames.toString());
+
+        List<String> modelComponentNames = model.getCustomComponents().stream()
+                .map(customComponent -> customComponent.getComponentName())
                 .collect(Collectors.toList());
-        List<String> appComponentNames = appComponents.stream()
-                .map(component -> component.componentName())
-                .collect(Collectors.toList());
+        logger.log("model component names: " + modelComponentNames.toString());
+
+        List<String> componentNamesToCreate = new ArrayList<>(modelComponentNames);
+        componentNamesToCreate.removeAll(appComponentNames);
+
+        return componentNamesToCreate;
+    }
+
+    public static List<String> getCustomComponentNamesToDelete(
+            ResourceModel model,
+            AmazonWebServicesClientProxy proxy,
+            ApplicationInsightsClient applicationInsightsClient,
+            Logger logger) {
+        List<String> appComponentNames = getAppCustomComponentNames(model.getResourceGroupName(), proxy, applicationInsightsClient);
         logger.log("app component names: " + appComponentNames.toString());
 
         List<CustomComponent> modelComponents = model.getCustomComponents();
@@ -472,13 +488,8 @@ public class HandlerHelper {
         List<String> modelComponentNames = new ArrayList<>(modelComponentMap.keySet());
         logger.log("model component names: " + modelComponentNames.toString());
 
-        List<String> appOnlyComponentNames = new ArrayList<>(appComponentNames);
-        appOnlyComponentNames.removeAll(modelComponentNames);
-        customCompnentNamesToDelete.addAll(appOnlyComponentNames);
-
-        List<String> modelOnlyComponentNames = new ArrayList<>(modelComponentNames);
-        modelOnlyComponentNames.removeAll(appComponentNames);
-        customCompnentNamesToCreate.addAll(modelOnlyComponentNames);
+        List<String> componentNamesToDelete = new ArrayList<>(appComponentNames);
+        componentNamesToDelete.removeAll(modelComponentNames);
 
         List<String> commonComponentNames = new ArrayList<>(appComponentNames);
         commonComponentNames.retainAll(modelComponentNames);
@@ -497,10 +508,22 @@ public class HandlerHelper {
             // e.g. before change: component A contains instance 1, component B contains instance 2;
             // after change: component A contains instance 2, component B contains instance 1
             if (resourceList.size() != modelResourceList.size() || !resourceList.containsAll(modelResourceList)) {
-                customCompnentNamesToDelete.add(commonComponentName);
-                customCompnentNamesToCreate.add(commonComponentName);
+                componentNamesToDelete.add(commonComponentName);
             }
         }
+
+        return componentNamesToDelete;
+    }
+
+    private static List<String> getAppCustomComponentNames(
+            String resourceGroupName,
+            AmazonWebServicesClientProxy proxy,
+            ApplicationInsightsClient applicationInsightsClient) {
+        ListComponentsResponse listComponentsResponse = listApplicationComponents(resourceGroupName, proxy, applicationInsightsClient);
+        return listComponentsResponse.applicationComponentList().stream()
+                .filter(component -> component.resourceType().equals("CustomComponent"))
+                .map(component -> component.componentName())
+                .collect(Collectors.toList());
     }
 
     private static DescribeComponentResponse describeAppicationComponent(
@@ -527,59 +550,77 @@ public class HandlerHelper {
 
     public static void deleteCustomComponent(
             String componentNameToDelete,
-            ResourceModel model,
+            String resourceGroupName,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient) {
         proxy.injectCredentialsAndInvokeV2(DeleteComponentRequest.builder()
-                        .resourceGroupName(model.getResourceGroupName())
+                        .resourceGroupName(resourceGroupName)
                         .componentName(componentNameToDelete)
                         .build(),
                 applicationInsightsClient::deleteComponent);
     }
 
-    public static void getlogSetAndPatternToDeleteCreateUpdate(
-            List<String> logSetAndPatternToDelete,
-            List<String> logSetAndPatternToCreate,
-            List<String> logSetAndPatternToUpdate,
+    public static List<String> getLogPatternIdentifiersToDelete(
             ResourceModel model,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient) {
-        ListLogPatternsResponse listLogPatternsResponse = listLogPatterns(model.getResourceGroupName(), proxy, applicationInsightsClient);
+        List<String> appLogPatternIdentifiers = getAppLogPatternIdentifiers(model.getResourceGroupName(), proxy, applicationInsightsClient);
 
-        List<String> appLogSetAndPatterns = listLogPatternsResponse.logPatterns().stream()
-                .map(logPattern -> generateLogPatternIdentifier(logPattern.patternSetName(), logPattern.patternName()))
-                .collect(Collectors.toList());
+        List<String> modelLogPatternIdentifiers = getModelLogPatternIdentifiers(model);
 
-        List<String> modelLogSetAndPatterns = new ArrayList<>();
-        for (LogPatternSet logPatternSet : model.getLogPatternSets()) {
-            String patternSetName = logPatternSet.getPatternSetName();
-            for (LogPattern logPattern : logPatternSet.getLogPatterns()) {
-                String patternName = logPattern.getPatternName();
-                modelLogSetAndPatterns.add(generateLogPatternIdentifier(patternSetName, patternName));
-            }
-        }
+        List<String> logPatternIdentifiersToDelete = new ArrayList<>(appLogPatternIdentifiers);
+        logPatternIdentifiersToDelete.removeAll(modelLogPatternIdentifiers);
 
-        List<String> deleteList = new ArrayList<>(appLogSetAndPatterns);
-        deleteList.removeAll(modelLogSetAndPatterns);
-        logSetAndPatternToDelete.addAll(deleteList);
+        return logPatternIdentifiersToDelete;
+    }
 
-        List<String> createList = new ArrayList<>(modelLogSetAndPatterns);
-        createList.removeAll(appLogSetAndPatterns);
-        logSetAndPatternToCreate.addAll(createList);
+    public static List<String> getLogPatternIdentifiersToCreate(
+            ResourceModel model,
+            AmazonWebServicesClientProxy proxy,
+            ApplicationInsightsClient applicationInsightsClient) {
+        List<String> appLogPatternIdentifiers = getAppLogPatternIdentifiers(model.getResourceGroupName(), proxy, applicationInsightsClient);
 
-        List<String> retainList = new ArrayList<>(appLogSetAndPatterns);
-        retainList.retainAll(modelLogSetAndPatterns);
+        List<String> modelLogPatternIdentifiers = getModelLogPatternIdentifiers(model);
 
-        for (String retainLogSetAndPattern : retainList) {
+        List<String> logPatternIdentifiersToCreate = new ArrayList<>(modelLogPatternIdentifiers);
+        logPatternIdentifiersToCreate.removeAll(appLogPatternIdentifiers);
+
+        return logPatternIdentifiersToCreate;
+    }
+
+    public static List<String> getLogPatternIdentifiersToUpdate(
+            ResourceModel model,
+            AmazonWebServicesClientProxy proxy,
+            ApplicationInsightsClient applicationInsightsClient) {
+        List<String> appLogPatternIdentifiers = getAppLogPatternIdentifiers(model.getResourceGroupName(), proxy, applicationInsightsClient);
+
+        List<String> modelLogPatternIdentifiers = getModelLogPatternIdentifiers(model);
+
+        List<String> commonLogPatternIdentifiers = new ArrayList<>(appLogPatternIdentifiers);
+        commonLogPatternIdentifiers.retainAll(modelLogPatternIdentifiers);
+
+        List<String> logPatternIdentifiersToUpdate = new ArrayList<>();
+        for (String commonLogPatternIdentifier : commonLogPatternIdentifiers) {
             if (!isLogPatternSyncedWithModel(
-                    retainLogSetAndPattern.split(":")[0],
-                    retainLogSetAndPattern.split(":")[1],
+                    commonLogPatternIdentifier.split(":")[0],
+                    commonLogPatternIdentifier.split(":")[1],
                     model,
                     proxy,
                     applicationInsightsClient)) {
-                logSetAndPatternToUpdate.add(retainLogSetAndPattern);
+                logPatternIdentifiersToUpdate.add(commonLogPatternIdentifier);
             }
         }
+
+        return logPatternIdentifiersToUpdate;
+    }
+
+    private static List<String> getAppLogPatternIdentifiers(
+            String resourceGroupName,
+            AmazonWebServicesClientProxy proxy,
+            ApplicationInsightsClient applicationInsightsClient) {
+        return listLogPatterns(resourceGroupName, proxy, applicationInsightsClient).logPatterns().stream()
+                .map(logPattern -> generateLogPatternIdentifier(logPattern.patternSetName(), logPattern.patternName()))
+                .collect(Collectors.toList());
     }
 
     private static ListLogPatternsResponse listLogPatterns(
@@ -615,7 +656,8 @@ public class HandlerHelper {
         proxy.injectCredentialsAndInvokeV2(UpdateLogPatternRequest.builder()
                         .resourceGroupName(model.getResourceGroupName())
                         .patternSetName(patternSetName)
-                        .patternName(logPattern.getPatternName()).pattern(logPattern.getPattern())
+                        .patternName(logPattern.getPatternName())
+                        .pattern(logPattern.getPattern())
                         .rank(logPattern.getRank())
                         .build(),
                 applicationInsightsClient::updateLogPattern);
@@ -666,30 +708,6 @@ public class HandlerHelper {
             String patternSetName,
             String patternName) {
         return String.format("%s:%s", patternSetName, patternName);
-    }
-
-    public static ComponentMonitoringSetting pickNextComponentMonitoringSetting(
-            ResourceModel model,
-            CallbackContext callbackContext) {
-        List<ComponentMonitoringSetting> componentMonitoringSettings = model.getComponentMonitoringSettings();
-        if (componentMonitoringSettings == null || componentMonitoringSettings.isEmpty()) {
-            return null;
-        }
-
-        for (ComponentMonitoringSetting componentMonitoringSetting : componentMonitoringSettings) {
-            if (!callbackContext.getProcessedItems().contains(
-                    HandlerHelper.getComponentNameOrARNFromComponentMonitoringSetting(componentMonitoringSetting))) {
-                return componentMonitoringSetting;
-            }
-        }
-
-        return null;
-    }
-
-    public static String pickNextConfigurationComponent(CallbackContext callbackContext) {
-        List<String> unprocessedDefaultConfiguationComponents = callbackContext.getUnprocessedItems();
-        return (unprocessedDefaultConfiguationComponents == null || unprocessedDefaultConfiguationComponents.isEmpty()) ?
-                null : unprocessedDefaultConfiguationComponents.get(0);
     }
 
     public static boolean isComponentConfigurationEnabled(
@@ -825,7 +843,7 @@ public class HandlerHelper {
                 .collect(Collectors.toList());
     }
 
-    public static List<String> getAllLogPatternIdentifiersToCreate(ResourceModel model) {
+    public static List<String> getModelLogPatternIdentifiers(ResourceModel model) {
         List<String> logPatternIdentifiers = new ArrayList<>();
 
         if (model.getLogPatternSets() == null || model.getLogPatternSets().isEmpty()) {
@@ -852,5 +870,32 @@ public class HandlerHelper {
                         .map(componentMonitoringSetting ->
                                 HandlerHelper.getComponentNameOrARNFromComponentMonitoringSetting(componentMonitoringSetting))
                         .collect(Collectors.toList());
+    }
+
+    public static boolean appNeedsUpdate(ResourceModel model, DescribeApplicationResponse response) {
+        Boolean newCWEMonitorEnabled = model.getCWEMonitorEnabled() == null ?
+                false : model.getCWEMonitorEnabled();
+        Boolean preCWEMonitorEnabled = response.applicationInfo().cweMonitorEnabled() == null ?
+                false : response.applicationInfo().cweMonitorEnabled();
+        if (newCWEMonitorEnabled != preCWEMonitorEnabled) {
+            return true;
+        }
+
+        Boolean newOpsCenterEnabled = model.getOpsCenterEnabled() == null ?
+                false : model.getOpsCenterEnabled();
+        Boolean preOpsCenterEnabled = response.applicationInfo().opsCenterEnabled() == null ?
+                false : response.applicationInfo().opsCenterEnabled();
+        if (newOpsCenterEnabled != preOpsCenterEnabled) {
+            return true;
+        }
+
+        String newOpsItemSNSTopicArn = model.getOpsItemSNSTopicArn();
+        String preOpsItemSNSTopicArn = response.applicationInfo().opsItemSNSTopicArn();
+        if (!((newOpsItemSNSTopicArn == null && preOpsItemSNSTopicArn == null) ||
+                newOpsItemSNSTopicArn.equals(preOpsItemSNSTopicArn))) {
+            return true;
+        }
+
+        return false;
     }
 }

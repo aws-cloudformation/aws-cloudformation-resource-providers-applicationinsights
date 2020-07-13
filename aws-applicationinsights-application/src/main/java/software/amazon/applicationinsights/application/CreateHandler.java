@@ -34,12 +34,13 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         final ResourceModel model = request.getDesiredResourceState();
 
         logger.log(String.format("Create Handler called with resourceGroupName %s", model.getResourceGroupName()));
+        logger.log("Resource Model: " + model.toString());
+
         final CallbackContext newCallbackContext = callbackContext == null ?
                 CallbackContext.builder().stabilizationRetriesRemaining(CREATE_STATUS_POLL_RETRIES).build() :
                 callbackContext;
 
-        logger.log("ComponentMonitoringSettings: " + model.getComponentMonitoringSettings().toString());
-        logger.log("AutoConfigurationEnabled: " + model.getAutoConfigurationEnabled());
+        logger.log("Callback Context: " + newCallbackContext.toString());
 
         model.setApplicationARN(String.format("arn:aws:applicationinsights:%s:%s:application/resource-group/%s",
                 request.getRegion(),
@@ -61,6 +62,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         }
 
         if (currentStep == null) {
+            // go to APP_CREATION step
             return ProgressEvent.defaultInProgressHandler(
                     CallbackContext.builder()
                             .currentStep(Step.APP_CREATION.name())
@@ -71,6 +73,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
                     Step.APP_CREATION.getCallBackWaitSeconds(),
                     model);
         } else if (currentStep.equals(Step.APP_CREATION.name())) {
+            // go to COMPONENT_CREATION step
             List<String> allCustomComponentNamesToCreate = HandlerHelper.getAllCustomComponentNamesToCreate(model);
             ProgressEvent<ResourceModel, CallbackContext> componentCreationStepInitProgressEvent =
                     ProgressEvent.defaultInProgressHandler(
@@ -86,7 +89,8 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
             return new AppCreationStepWorkflow(model, newCallbackContext, proxy, applicationInsightsClient, logger, componentCreationStepInitProgressEvent)
                     .execute();
         } else if (currentStep.equals(Step.COMPONENT_CREATION.name())) {
-            List<String> allLogPatternIdentifierToCreate = HandlerHelper.getAllLogPatternIdentifiersToCreate(model);
+            // go to LOG_PATTERN_CREATION step
+            List<String> allLogPatternIdentifierToCreate = HandlerHelper.getModelLogPatternIdentifiers(model);
             ProgressEvent<ResourceModel, CallbackContext> logPatternCreationStepInitProgressEvent =
                     ProgressEvent.defaultInProgressHandler(
                             CallbackContext.builder()
@@ -101,6 +105,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
             return new ComponentCreationStepWorkflow(model, newCallbackContext, proxy, applicationInsightsClient, logger, logPatternCreationStepInitProgressEvent)
                     .execute();
         } else if (currentStep.equals(Step.LOG_PATTERN_CREATION.name())) {
+            // go to COMPONENT_CONFIGURATION step
             List<String> allComponentNamesWithMonitoringSettings = HandlerHelper.getAllComponentNamesWithMonitoringSettings(model, logger);
             logger.log("All Component Names With Monitoring Settings: " + allComponentNamesWithMonitoringSettings.toString());
             ProgressEvent<ResourceModel, CallbackContext> componentConfigurationStepInitProgressEvent =
@@ -117,8 +122,10 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
             return new LogPatternCreationStepWorkflow(model, newCallbackContext, proxy, applicationInsightsClient, logger, componentConfigurationStepInitProgressEvent)
                     .execute();
         } else if (currentStep.equals(Step.COMPONENT_CONFIGURATION.name())) {
-            logger.log("Entering COMPONENT_CONFIGURATION section.");
-            ProgressEvent<ResourceModel, CallbackContext> successOrAutoConfigurationStepInitProgressEvent =
+            // if not all components have monitoring settings,
+            // go to DEFAULT_COMPONENT_CONFIGURATION step if auto config is enabled,
+            // otherwise succeed
+            ProgressEvent<ResourceModel, CallbackContext> successOrDefaultConfigurationStepInitProgressEvent =
                     ProgressEvent.defaultSuccessHandler(model);
 
             Boolean autoConfigurationEnabled = model.getAutoConfigurationEnabled();
@@ -129,7 +136,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
                 defaultConfigComponentNames.removeAll(allComponentNamesWithMonitoringSettings);
 
                 if (defaultConfigComponentNames != null && !defaultConfigComponentNames.isEmpty()) {
-                    successOrAutoConfigurationStepInitProgressEvent =
+                    successOrDefaultConfigurationStepInitProgressEvent =
                             ProgressEvent.defaultInProgressHandler(
                                     CallbackContext.builder()
                                             .currentStep(Step.DEFAULT_COMPONENT_CONFIGURATION.name())
@@ -142,7 +149,7 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
                 }
             }
 
-            return new ComponentConfigurationStepWorkflow(model, newCallbackContext, proxy, applicationInsightsClient, logger, successOrAutoConfigurationStepInitProgressEvent)
+            return new ComponentConfigurationStepWorkflow(model, newCallbackContext, proxy, applicationInsightsClient, logger, successOrDefaultConfigurationStepInitProgressEvent)
                     .execute();
         } else if (currentStep.equals(Step.DEFAULT_COMPONENT_CONFIGURATION.name())) {
             ProgressEvent<ResourceModel, CallbackContext> successInitProgressEvent =

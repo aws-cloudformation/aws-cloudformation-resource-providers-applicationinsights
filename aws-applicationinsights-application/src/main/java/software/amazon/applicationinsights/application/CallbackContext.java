@@ -15,10 +15,6 @@ import java.util.Set;
 public class CallbackContext {
     private String currentStep;
     private Integer stabilizationRetriesRemaining;
-    private Set<String> processedItems;
     private List<String> unprocessedItems;
-    private List<String> undeletedItems;
-    private List<String> uncreatedItems;
-    private List<String> unupdatedItems;
     private String processingItem;
 }
