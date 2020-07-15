@@ -862,8 +862,6 @@ public class HandlerHelper {
     }
 
     public static List<String> getAllComponentNamesWithMonitoringSettings(ResourceModel model, Logger logger) {
-        logger.log("ComponentMonitoringSettings: " + model.getComponentMonitoringSettings().toString());
-
         return model.getComponentMonitoringSettings() == null ?
                 new ArrayList<>() :
                 model.getComponentMonitoringSettings().stream()
