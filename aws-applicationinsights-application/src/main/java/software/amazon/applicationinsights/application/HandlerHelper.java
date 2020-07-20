@@ -428,9 +428,11 @@ public class HandlerHelper {
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient,
             Logger logger) {
-        List<software.amazon.applicationinsights.application.Tag> tagsToCreate = model.getTags().stream()
-                .filter(tag -> tagKeyToCreate.equals(tag.getKey()))
-                .collect(Collectors.toList());
+        List<software.amazon.applicationinsights.application.Tag> tagsToCreate =
+                Optional.ofNullable(model.getTags()).orElse(Collections.emptyList())
+                        .stream()
+                        .filter(tag -> tagKeyToCreate.equals(tag.getKey()))
+                        .collect(Collectors.toList());
 
         logger.log(String.format("Calling TagResoruce API: %s %s", model.getApplicationARN(), translateModelTagsToSdkTags(tagsToCreate).toString()));
         proxy.injectCredentialsAndInvokeV2(TagResourceRequest.builder()
@@ -448,9 +450,11 @@ public class HandlerHelper {
             ApplicationInsightsClient applicationInsightsClient) {
         List<Tag> appTags = getApplicationTags(model.getApplicationARN(), proxy, applicationInsightsClient);
 
-        List<software.amazon.applicationinsights.application.Tag> tagsToCheck = model.getTags().stream()
-                .filter(tag -> tagKey.equals(tag.getKey()))
-                .collect(Collectors.toList());
+        List<software.amazon.applicationinsights.application.Tag> tagsToCheck =
+                Optional.ofNullable(model.getTags()).orElse(Collections.emptyList())
+                        .stream()
+                        .filter(tag -> tagKey.equals(tag.getKey()))
+                        .collect(Collectors.toList());
 
         return appTags.containsAll(translateModelTagsToSdkTags(tagsToCheck));
     }
@@ -463,9 +467,11 @@ public class HandlerHelper {
         List<String> appComponentNames = getAppCustomComponentNames(model.getResourceGroupName(), proxy, applicationInsightsClient);
         logger.log("app component names: " + appComponentNames.toString());
 
-        List<String> modelComponentNames = model.getCustomComponents().stream()
-                .map(customComponent -> customComponent.getComponentName())
-                .collect(Collectors.toList());
+        List<String> modelComponentNames =
+                Optional.ofNullable(model.getCustomComponents()).orElse(Collections.emptyList())
+                        .stream()
+                        .map(customComponent -> customComponent.getComponentName())
+                        .collect(Collectors.toList());
         logger.log("model component names: " + modelComponentNames.toString());
 
         List<String> componentNamesToCreate = new ArrayList<>(modelComponentNames);
@@ -482,9 +488,10 @@ public class HandlerHelper {
         List<String> appComponentNames = getAppCustomComponentNames(model.getResourceGroupName(), proxy, applicationInsightsClient);
         logger.log("app component names: " + appComponentNames.toString());
 
-        List<CustomComponent> modelComponents = model.getCustomComponents();
-        Map<String, CustomComponent> modelComponentMap = modelComponents.stream()
-                .collect(Collectors.toMap(CustomComponent::getComponentName, Function.identity()));
+        Map<String, CustomComponent> modelComponentMap =
+                Optional.ofNullable(model.getCustomComponents()).orElse(Collections.emptyList())
+                        .stream()
+                        .collect(Collectors.toMap(CustomComponent::getComponentName, Function.identity()));
         List<String> modelComponentNames = new ArrayList<>(modelComponentMap.keySet());
         logger.log("model component names: " + modelComponentNames.toString());
 
@@ -691,6 +698,10 @@ public class HandlerHelper {
     }
 
     public static LogPattern pickLogPatternFromModel(String patternSetName, String patternName, ResourceModel model) {
+        if (model.getLogPatternSets() == null || model.getLogPatternSets().isEmpty()) {
+            return null;
+        }
+
         for (LogPatternSet logPatternSet : model.getLogPatternSets()) {
             if (logPatternSet.getPatternSetName().equals(patternSetName)) {
                 for (LogPattern logPattern : logPatternSet.getLogPatterns()) {
@@ -862,12 +873,11 @@ public class HandlerHelper {
     }
 
     public static List<String> getAllComponentNamesWithMonitoringSettings(ResourceModel model, Logger logger) {
-        return model.getComponentMonitoringSettings() == null ?
-                new ArrayList<>() :
-                model.getComponentMonitoringSettings().stream()
-                        .map(componentMonitoringSetting ->
-                                HandlerHelper.getComponentNameOrARNFromComponentMonitoringSetting(componentMonitoringSetting))
-                        .collect(Collectors.toList());
+        return Optional.ofNullable(model.getComponentMonitoringSettings()).orElse(Collections.emptyList())
+                .stream()
+                .map(componentMonitoringSetting ->
+                        HandlerHelper.getComponentNameOrARNFromComponentMonitoringSetting(componentMonitoringSetting))
+                .collect(Collectors.toList());
     }
 
     public static boolean appNeedsUpdate(ResourceModel model, DescribeApplicationResponse response) {
