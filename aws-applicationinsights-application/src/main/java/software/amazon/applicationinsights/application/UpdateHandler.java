@@ -94,20 +94,21 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
                         model);
             }
         } else if (currentStep.equals(Step.APP_CREATION.name())) {
-            // go to COMPONENT_DELETION step, since tag creation is already done along with app creation
-            List<String> customComponentNamesToDelete = HandlerHelper.getCustomComponentNamesToDelete(model, proxy, applicationInsightsClient, logger);
-            ProgressEvent<ResourceModel, CallbackContext> componentDeletionStepInitProgressEvent =
+            // go to COMPONENT_CREATION step, since tag creation is already done along with app creation,
+            // and there's no component deletion needed for new created application
+            List<String> allCustomComponentNamesToCreate = HandlerHelper.getAllCustomComponentNamesToCreate(model);
+            ProgressEvent<ResourceModel, CallbackContext> componentCreationStepInitProgressEvent =
                     ProgressEvent.defaultInProgressHandler(
                             CallbackContext.builder()
-                                    .currentStep(Step.COMPONENT_DELETION.name())
+                                    .currentStep(Step.COMPONENT_CREATION.name())
                                     .stabilizationRetriesRemaining(newCallbackContext.getStabilizationRetriesRemaining())
                                     .processingItem(null)
-                                    .unprocessedItems(customComponentNamesToDelete)
+                                    .unprocessedItems(allCustomComponentNamesToCreate)
                                     .build(),
                             TRANSITION_CALLBACK_DELAY_SECONDS,
                             model);
 
-            return new AppCreationStepWorkflow(model, newCallbackContext, proxy, applicationInsightsClient, logger, componentDeletionStepInitProgressEvent)
+            return new AppCreationStepWorkflow(model, newCallbackContext, proxy, applicationInsightsClient, logger, componentCreationStepInitProgressEvent)
                     .execute();
         } else if (currentStep.equals(Step.APP_UPDATE.name())) {
             // go to TAG_DELETION step next
