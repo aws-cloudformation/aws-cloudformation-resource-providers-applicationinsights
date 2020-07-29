@@ -175,7 +175,7 @@
             "additionalProperties": false
         },
         "ComponentMonitoringSetting": {
-            "description": "The monitoring setting for the component.",
+            "description": "The monitoring setting of the component.",
             "type": "object",
             "properties": {
                 "ComponentName": {
@@ -252,7 +252,7 @@
                     "$ref": "#/definitions/ConfigurationDetails"
                 },
                 "SubComponentTypeConfigurations": {
-                    "description": "Sub component configurations for the component.",
+                    "description": "Sub component configurations of the component.",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/SubComponentTypeConfiguration"
@@ -298,7 +298,7 @@
             "additionalProperties": false
         },
         "SubComponentConfigurationDetails": {
-            "description": "The configuration settings.",
+            "description": "The configuration settings of sub components.",
             "type": "object",
             "properties": {
                 "AlarmMetrics": {
@@ -355,7 +355,7 @@
                     "type": "string",
                     "minimum": 1,
                     "maximum": 260,
-                    "pattern": "(^[a-zA-Z]:\\\\[\\\\\\S|*\\S]?.*$) | (^/[^\"']*$)"
+                    "pattern": "^([a-zA-Z]:\\\\[\\\\\\S|*\\S]?.*|/[^\"']*)$"
                 },
                 "LogType": {
                     "description": "The log type decides the log patterns against which Application Insights analyzes the log.",
@@ -478,7 +478,7 @@
                     ]
                 },
                 "SubComponentConfigurationDetails": {
-                    "description": "The sub component type monitoring configuration.",
+                    "description": "The configuration settings of sub components.",
                     "$ref": "#/definitions/SubComponentConfigurationDetails"
                 }
             },
