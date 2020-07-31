@@ -756,6 +756,8 @@ public class HandlerHelper {
             ApplicationInsightsClient applicationInsightsClient) {
         ResourceModel readModel = ResourceModel.builder().build();
 
+        readModel.setResourceGroupName(resourceGroupName);
+
         readModel.setApplicationARN(String.format("arn:aws:applicationinsights:%s:%s:application/resource-group/%s",
                 request.getRegion(),
                 request.getAwsAccountId(),
