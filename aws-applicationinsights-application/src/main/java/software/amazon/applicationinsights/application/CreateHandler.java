@@ -37,18 +37,19 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
         logger.log(String.format("Create Handler called with resourceGroupName %s", model.getResourceGroupName()));
         logger.log("Resource Model: " + model.toString());
 
-        final CallbackContext newCallbackContext = callbackContext == null ?
-                CallbackContext.builder().stabilizationRetriesRemaining(CREATE_STATUS_POLL_RETRIES).build() :
-                callbackContext;
-
-        logger.log("Callback Context: " + newCallbackContext.toString());
-
-        if (model.getApplicationARN() != null) {
+        // if the first invocation has non-null ApplicationARN, fail the creation
+        if (callbackContext == null && model.getApplicationARN() != null) {
             final Exception ex = ValidationException.builder()
                     .message("ApplicationARN is read only property and should not be set.")
                     .build();
             return ProgressEvent.defaultFailureHandler(ex, ExceptionMapper.mapToHandlerErrorCode(ex));
         }
+
+        final CallbackContext newCallbackContext = callbackContext == null ?
+                CallbackContext.builder().stabilizationRetriesRemaining(CREATE_STATUS_POLL_RETRIES).build() :
+                callbackContext;
+
+        logger.log("Callback Context: " + newCallbackContext.toString());
 
         model.setApplicationARN(String.format("arn:aws:applicationinsights:%s:%s:application/resource-group/%s",
                 request.getRegion(),
