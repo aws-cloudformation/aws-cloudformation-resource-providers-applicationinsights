@@ -7,6 +7,7 @@ import software.amazon.applicationinsights.application.StepWorkflow.DefaultCompo
 import software.amazon.applicationinsights.application.StepWorkflow.LogPatternCreationStepWorkflow;
 import software.amazon.awssdk.services.applicationinsights.ApplicationInsightsClient;
 import software.amazon.awssdk.services.applicationinsights.model.ResourceInUseException;
+import software.amazon.awssdk.services.applicationinsights.model.ValidationException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
@@ -35,6 +36,13 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
 
         logger.log(String.format("Create Handler called with resourceGroupName %s", model.getResourceGroupName()));
         logger.log("Resource Model: " + model.toString());
+
+        if (model.getApplicationARN() != null) {
+            final Exception ex = ValidationException.builder()
+                    .message("ApplicationARN is read only property and should not be set.")
+                    .build();
+            return ProgressEvent.defaultFailureHandler(ex, ExceptionMapper.mapToHandlerErrorCode(ex));
+        }
 
         final CallbackContext newCallbackContext = callbackContext == null ?
                 CallbackContext.builder().stabilizationRetriesRemaining(CREATE_STATUS_POLL_RETRIES).build() :

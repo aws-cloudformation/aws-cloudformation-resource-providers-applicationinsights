@@ -2,6 +2,7 @@ package software.amazon.applicationinsights.application;
 
 import software.amazon.awssdk.services.applicationinsights.model.ResourceInUseException;
 import software.amazon.awssdk.services.applicationinsights.model.ResourceNotFoundException;
+import software.amazon.awssdk.services.applicationinsights.model.ValidationException;
 import software.amazon.cloudformation.proxy.HandlerErrorCode;
 
 public class ExceptionMapper {
@@ -15,6 +16,8 @@ public class ExceptionMapper {
             return HandlerErrorCode.ResourceConflict;
         } else if (exception instanceof ResourceNotFoundException) {
             return HandlerErrorCode.NotFound;
+        } else if (exception instanceof ValidationException) {
+            return HandlerErrorCode.InvalidRequest;
         } else {
             return HandlerErrorCode.InternalFailure;
         }
