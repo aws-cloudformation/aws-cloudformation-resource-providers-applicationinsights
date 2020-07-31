@@ -771,18 +771,25 @@ public class HandlerHelper {
 
         // set readModel tags attribute
         List<Tag> appTags = getApplicationTags(readModel.getApplicationARN(), proxy, applicationInsightsClient);
-        readModel.setTags(new ArrayList<>(translateSdkTagsToModelTags(appTags)));
+        if (appTags != null && !appTags.isEmpty()) {
+            readModel.setTags(new ArrayList<>(translateSdkTagsToModelTags(appTags)));
+        }
 
         // set readModel customComponents attribute
         ListComponentsResponse listComponentsResponse = listApplicationComponents(resourceGroupName, proxy, applicationInsightsClient);
         List<ApplicationComponent> appCustomComponents = listComponentsResponse.applicationComponentList().stream()
                 .filter(component -> component.resourceType().equals("CustomComponent"))
                 .collect(Collectors.toList());
-        readModel.setCustomComponents(tanslateSdkCustomComponentsToModelCustomComponents(appCustomComponents, resourceGroupName, proxy, applicationInsightsClient));
+        if (appCustomComponents != null && !appCustomComponents.isEmpty()) {
+            readModel.setCustomComponents(tanslateSdkCustomComponentsToModelCustomComponents(appCustomComponents, resourceGroupName, proxy, applicationInsightsClient));
+        }
 
         // set readModel logPatternSets attribute
         ListLogPatternsResponse listLogPatternsResponse = listLogPatterns(resourceGroupName, proxy, applicationInsightsClient);
-        readModel.setLogPatternSets(translateSdkLogPatternsToModelLogPatternSets(listLogPatternsResponse.logPatterns()));
+        List<LogPatternSet> appLogPatternSets = translateSdkLogPatternsToModelLogPatternSets(listLogPatternsResponse.logPatterns());
+        if (appLogPatternSets != null && !appLogPatternSets.isEmpty()) {
+            readModel.setLogPatternSets(appLogPatternSets);
+        }
 
         return readModel;
     }
