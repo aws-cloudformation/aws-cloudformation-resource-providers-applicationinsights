@@ -31,7 +31,7 @@ public class DeleteHandler extends BaseHandler<CallbackContext> {
         if (callbackContext == null) {
             if (!HandlerHelper.doesApplicationExist(model.getResourceGroupName(), proxy, applicationInsightsClient)) {
                 // Check if application is already deleted before the call
-                return ProgressEvent.defaultSuccessHandler(model);
+                return ProgressEvent.defaultSuccessHandler(null);
             } else {
                 HandlerHelper.deleteApplicationInsightsApplication(model, proxy, applicationInsightsClient);
             }
