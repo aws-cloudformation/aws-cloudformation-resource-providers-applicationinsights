@@ -14,6 +14,7 @@ import software.amazon.applicationinsights.application.StepWorkflow.TagCreationS
 import software.amazon.applicationinsights.application.StepWorkflow.TagDeletionStepWorkflow;
 import software.amazon.awssdk.services.applicationinsights.ApplicationInsightsClient;
 import software.amazon.awssdk.services.applicationinsights.model.DescribeApplicationResponse;
+import software.amazon.awssdk.services.applicationinsights.model.ResourceNotFoundException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
@@ -71,16 +72,11 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
 
         if (currentStep == null) {
             if (!HandlerHelper.doesApplicationExist(model.getResourceGroupName(), proxy, applicationInsightsClient)) {
-                // recreate the application if it's deleted
-                return ProgressEvent.defaultInProgressHandler(
-                        CallbackContext.builder()
-                                .currentStep(Step.APP_CREATION.name())
-                                .stabilizationRetriesRemaining(newCallbackContext.getStabilizationRetriesRemaining())
-                                .processingItem(null)
-                                .unprocessedItems(new ArrayList<>(Arrays.asList(model.getResourceGroupName())))
-                                .build(),
-                        Step.APP_CREATION.getCallBackWaitSeconds(),
-                        model);
+                // if the application does not exit, fail the update
+                final Exception ex = ResourceNotFoundException.builder()
+                        .message("Application does not exit for resource group " + model.getResourceGroupName())
+                        .build();
+                return ProgressEvent.defaultFailureHandler(ex, ExceptionMapper.mapToHandlerErrorCode(ex));
             } else {
                 // update the app
                 return ProgressEvent.defaultInProgressHandler(
@@ -93,23 +89,6 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
                         Step.APP_UPDATE.getCallBackWaitSeconds(),
                         model);
             }
-        } else if (currentStep.equals(Step.APP_CREATION.name())) {
-            // go to COMPONENT_CREATION step, since tag creation is already done along with app creation,
-            // and there's no component deletion needed for new created application
-            List<String> allCustomComponentNamesToCreate = HandlerHelper.getAllCustomComponentNamesToCreate(model);
-            ProgressEvent<ResourceModel, CallbackContext> componentCreationStepInitProgressEvent =
-                    ProgressEvent.defaultInProgressHandler(
-                            CallbackContext.builder()
-                                    .currentStep(Step.COMPONENT_CREATION.name())
-                                    .stabilizationRetriesRemaining(newCallbackContext.getStabilizationRetriesRemaining())
-                                    .processingItem(null)
-                                    .unprocessedItems(allCustomComponentNamesToCreate)
-                                    .build(),
-                            TRANSITION_CALLBACK_DELAY_SECONDS,
-                            model);
-
-            return new AppCreationStepWorkflow(model, newCallbackContext, proxy, applicationInsightsClient, logger, componentCreationStepInitProgressEvent)
-                    .execute();
         } else if (currentStep.equals(Step.APP_UPDATE.name())) {
             // go to TAG_DELETION step next
             List<String> tagKeysToDelete = HandlerHelper.getTagKeysToDelete(model, proxy, applicationInsightsClient);
