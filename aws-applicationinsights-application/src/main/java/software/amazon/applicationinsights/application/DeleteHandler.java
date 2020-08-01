@@ -42,7 +42,7 @@ public class DeleteHandler extends BaseHandler<CallbackContext> {
         }
 
         if (!HandlerHelper.doesApplicationExist(model.getResourceGroupName(), proxy, applicationInsightsClient)) {
-            return ProgressEvent.defaultSuccessHandler(model);
+            return ProgressEvent.defaultSuccessHandler(null);
         } else {
             return ProgressEvent.defaultInProgressHandler(
                     CallbackContext.builder()
