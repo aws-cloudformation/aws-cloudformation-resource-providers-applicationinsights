@@ -16,6 +16,7 @@ import software.amazon.awssdk.services.applicationinsights.ApplicationInsightsCl
 import software.amazon.awssdk.services.applicationinsights.model.DescribeApplicationResponse;
 import software.amazon.awssdk.services.applicationinsights.model.ResourceNotFoundException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
+import software.amazon.cloudformation.proxy.HandlerErrorCode;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.OperationStatus;
@@ -52,6 +53,12 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
 
         logger.log(String.format("Update Handler called with resourceGroupName %s", model.getResourceGroupName()));
         logger.log("Resource Model: " + model.toString());
+
+        final ResourceModel previousModel = request.getPreviousResourceState();
+        if (previousModel != null && !model.getResourceGroupName().equals(previousModel.getResourceGroupName())) {
+            return ProgressEvent.failed(null, null, HandlerErrorCode.NotUpdatable,
+                    String.format("Application cannot be updated as the Resource Group Name was changed"));
+        }
 
         final CallbackContext newCallbackContext = callbackContext == null ?
                 CallbackContext.builder().stabilizationRetriesRemaining(UPDATE_STATUS_POLL_RETRIES).build() :
