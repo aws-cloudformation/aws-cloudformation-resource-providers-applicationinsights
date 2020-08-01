@@ -1,6 +1,7 @@
 package software.amazon.applicationinsights.application;
 
 import software.amazon.awssdk.services.applicationinsights.ApplicationInsightsClient;
+import software.amazon.awssdk.services.applicationinsights.model.ResourceNotFoundException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
@@ -30,8 +31,11 @@ public class DeleteHandler extends BaseHandler<CallbackContext> {
 
         if (callbackContext == null) {
             if (!HandlerHelper.doesApplicationExist(model.getResourceGroupName(), proxy, applicationInsightsClient)) {
-                // Check if application is already deleted before the call
-                return ProgressEvent.defaultSuccessHandler(null);
+                // if the application does not exit, fail the delete
+                final Exception ex = ResourceNotFoundException.builder()
+                        .message("Application does not exit for resource group " + model.getResourceGroupName())
+                        .build();
+                return ProgressEvent.defaultFailureHandler(ex, ExceptionMapper.mapToHandlerErrorCode(ex));
             } else {
                 HandlerHelper.deleteApplicationInsightsApplication(model, proxy, applicationInsightsClient);
             }
