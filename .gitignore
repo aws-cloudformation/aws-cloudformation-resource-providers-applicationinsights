@@ -18,3 +18,9 @@ target/
 
 # our logs
 rpdk.log
+
+.gradle/
+build
+gradle/
+gradlew
+gradlew.bat
