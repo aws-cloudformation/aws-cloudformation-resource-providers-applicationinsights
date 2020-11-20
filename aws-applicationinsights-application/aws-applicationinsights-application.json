@@ -6,8 +6,8 @@
         "ResourceGroupName": {
             "description": "The name of the resource group.",
             "type": "string",
-            "minimum": 1,
-            "maximum": 256,
+            "minLength": 1,
+            "maxLength": 256,
             "pattern": "[a-zA-Z0-9.-_]*"
         },
         "ApplicationARN": {
@@ -25,8 +25,8 @@
         "OpsItemSNSTopicArn": {
             "description": "The SNS topic provided to Application Insights that is associated to the created opsItem.",
             "type": "string",
-            "minimum": 20,
-            "maximum": 300,
+            "minLength": 20,
+            "maxLength": 300,
             "pattern": "^arn:aws(-[\\w]+)*:[\\w\\d-]+:([\\w\\d-]*)?:[\\w\\d_-]*([:/].+)*$"
         },
         "Tags": {
@@ -97,8 +97,8 @@
                 "ComponentName": {
                     "description": "The name of the component.",
                     "type": "string",
-                    "minimum": 1,
-                    "maximum": 128,
+                    "minLength": 1,
+                    "maxLength": 128,
                     "pattern": "^[\\d\\w-_.+]*$"
                 },
                 "ResourceList": {
@@ -106,8 +106,8 @@
                     "type": "array",
                     "items": {
                         "type": "string",
-                        "minimum": 20,
-                        "maximum": 300,
+                        "minLength": 20,
+                        "maxLength": 300,
                         "pattern": "^arn:aws(-[\\w]+)*:[\\w\\d-]+:([\\w\\d-]*)?:[\\w\\d_-]*([:/].+)*$"
                     },
                     "minItems": 1
@@ -126,8 +126,8 @@
                 "PatternSetName": {
                     "description": "The name of the log pattern set.",
                     "type": "string",
-                    "minimum": 1,
-                    "maximum": 30,
+                    "minLength": 1,
+                    "maxLength": 30,
                     "pattern": "[a-zA-Z0-9.-_]*"
                 },
                 "LogPatterns": {
@@ -152,15 +152,15 @@
                 "PatternName": {
                     "description": "The name of the log pattern.",
                     "type": "string",
-                    "minimum": 1,
-                    "maximum": 50,
+                    "minLength": 1,
+                    "maxLength": 50,
                     "pattern": "[a-zA-Z0-9.-_]*"
                 },
                 "Pattern": {
                     "description": "The log pattern.",
                     "type": "string",
-                    "minimum": 1,
-                    "maximum": 50
+                    "minLength": 1,
+                    "maxLength": 50
                 },
                 "Rank": {
                     "description": "Rank of the log pattern.",
@@ -181,15 +181,15 @@
                 "ComponentName": {
                     "description": "The name of the component.",
                     "type": "string",
-                    "minimum": 1,
-                    "maximum": 128,
+                    "minLength": 1,
+                    "maxLength": 128,
                     "pattern": "^[\\d\\w-_.+]*$"
                 },
                 "ComponentARN": {
                     "description": "The ARN of the compnonent.",
                     "type": "string",
-                    "minimum": 20,
-                    "maximum": 300,
+                    "minLength": 20,
+                    "maxLength": 300,
                     "pattern": "^arn:aws(-[\\w]+)*:[\\w\\d-]+:([\\w\\d-]*)?:[\\w\\d_-]*([:/].+)*$"
                 },
                 "Tier": {
@@ -346,15 +346,15 @@
                 "LogGroupName": {
                     "description": "The CloudWatch log group name to be associated to the monitored log.",
                     "type": "string",
-                    "minimum": 1,
-                    "maximum": 512,
+                    "minLength": 1,
+                    "maxLength": 512,
                     "pattern": "[\\.\\-_/#A-Za-z0-9]+"
                 },
                 "LogPath": {
                     "description": "The path of the logs to be monitored.",
                     "type": "string",
-                    "minimum": 1,
-                    "maximum": 260,
+                    "minLength": 1,
+                    "maxLength": 260,
                     "pattern": "^([a-zA-Z]:\\\\[\\\\\\S|*\\S]?.*|/[^\"']*)$"
                 },
                 "LogType": {
@@ -379,8 +379,8 @@
                 "PatternSet": {
                     "description": "The name of the log pattern set.",
                     "type": "string",
-                    "minimum": 1,
-                    "maximum": 30,
+                    "minLength": 1,
+                    "maxLength": 30,
                     "pattern": "[a-zA-Z0-9.-_]*"
                 }
             },
@@ -396,15 +396,15 @@
                 "LogGroupName": {
                     "description": "The CloudWatch log group name to be associated to the monitored log.",
                     "type": "string",
-                    "minimum": 1,
-                    "maximum": 512,
+                    "minLength": 1,
+                    "maxLength": 512,
                     "pattern": "[\\.\\-_/#A-Za-z0-9]+"
                 },
                 "EventName": {
                     "description": "The type of Windows Events to log.",
                     "type": "string",
-                    "minimum": 1,
-                    "maximum": 260,
+                    "minLength": 1,
+                    "maxLength": 260,
                     "pattern": "^[a-zA-Z0-9_ \\\\/-]$"
                 },
                 "EventLevels": {
@@ -418,8 +418,8 @@
                 "PatternSet": {
                     "description": "The name of the log pattern set.",
                     "type": "string",
-                    "minimum": 1,
-                    "maximum": 30,
+                    "minLength": 1,
+                    "maxLength": 30,
                     "pattern": "[a-zA-Z0-9.-_]*"
                 }
             },
@@ -448,8 +448,8 @@
                 "AlarmName": {
                     "description": "The name of the CloudWatch alarm to be monitored for the component.",
                     "type": "string",
-                    "minimum": 1,
-                    "maximum": 255
+                    "minLength": 1,
+                    "maxLength": 255
                 },
                 "Severity": {
                     "description": "Indicates the degree of outage when the alarm goes off.",
