@@ -27,7 +27,7 @@
             "type": "string",
             "minimum": 20,
             "maximum": 300,
-            "pattern": "^arn:aws(-[\\w]+)?:[\\w\\d-]+:([\\w\\d-]*)?:[\\w\\d_-]*([:/].+)*$"
+            "pattern": "^arn:aws(-[\\w]+)*:[\\w\\d-]+:([\\w\\d-]*)?:[\\w\\d_-]*([:/].+)*$"
         },
         "Tags": {
             "description": "The tags of Application Insights application.",
@@ -108,7 +108,7 @@
                         "type": "string",
                         "minimum": 20,
                         "maximum": 300,
-                        "pattern": "^arn:aws(-[\\w]+)?:[\\w\\d-]+:([\\w\\d-]*)?:[\\w\\d_-]*([:/].+)*$"
+                        "pattern": "^arn:aws(-[\\w]+)*:[\\w\\d-]+:([\\w\\d-]*)?:[\\w\\d_-]*([:/].+)*$"
                     },
                     "minItems": 1
                 }
@@ -190,7 +190,7 @@
                     "type": "string",
                     "minimum": 20,
                     "maximum": 300,
-                    "pattern": "^arn:aws(-[\\w]+)?:[\\w\\d-]+:([\\w\\d-]*)?:[\\w\\d_-]*([:/].+)*$"
+                    "pattern": "^arn:aws(-[\\w]+)*:[\\w\\d-]+:([\\w\\d-]*)?:[\\w\\d_-]*([:/].+)*$"
                 },
                 "Tier": {
                     "description": "The tier of the application component.",
