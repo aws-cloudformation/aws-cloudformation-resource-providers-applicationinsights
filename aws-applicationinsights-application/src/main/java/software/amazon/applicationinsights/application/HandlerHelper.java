@@ -758,7 +758,8 @@ public class HandlerHelper {
 
         readModel.setResourceGroupName(resourceGroupName);
 
-        readModel.setApplicationARN(String.format("arn:aws:applicationinsights:%s:%s:application/resource-group/%s",
+        readModel.setApplicationARN(String.format("arn:%s:applicationinsights:%s:%s:application/resource-group/%s",
+                request.getAwsPartition(),
                 request.getRegion(),
                 request.getAwsAccountId(),
                 resourceGroupName));
