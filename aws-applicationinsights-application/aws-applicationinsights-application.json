@@ -200,7 +200,11 @@
                         "DOT_NET_WEB",
                         "DOT_NET_CORE",
                         "SQL_SERVER",
-                        "DEFAULT"
+                        "SQL_SERVER_ALWAYSON_AVAILABILITY_GROUP",
+                        "MYSQL",
+                        "POSTGRESQL",
+                        "DEFAULT",
+                        "CUSTOM"
                     ]
                 },
                 "ComponentConfigurationMode": {
@@ -362,9 +366,19 @@
                     "type": "string",
                     "enum": [
                         "SQL_SERVER",
+                        "MYSQL",
+                        "MYSQL_SLOW_QUERY",
+                        "POSTGRESQL",
                         "IIS",
                         "APPLICATION",
-                        "DEFAULT"
+                        "WINDOWS_EVENTS",
+                        "WINDOWS_EVENTS_GENERIC_ERRORS",
+                        "SQL_SERVER_ALWAYSON_AVAILABILITY_GROUP",
+                        "DEFAULT",
+                        "CUSTOM",
+                        "STEP_FUNCTION",
+                        "API_GATEWAY_ACCESS",
+                        "API_GATEWAY_EXECUTION"
                     ]
                 },
                 "Encoding": {
