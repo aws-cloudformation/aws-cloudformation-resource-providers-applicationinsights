@@ -297,6 +297,10 @@
                     "items": {
                         "$ref": "#/definitions/Alarm"
                     }
+                },
+                "JMXPrometheusExporter": {
+                    "description": "The JMX Prometheus Exporter settings.",
+                    "$ref": "#/definitions/JMXPrometheusExporter"
                 }
             },
             "additionalProperties": false
@@ -325,6 +329,25 @@
                     "items": {
                         "$ref": "#/definitions/WindowsEvent"
                     }
+                }
+            },
+            "additionalProperties": false
+        },
+        "JMXPrometheusExporter": {
+            "description": "The JMX Prometheus Exporter settings.",
+            "type": "object",
+            "properties": {
+                "JMXURL": {
+                    "description": "JMX service URL.",
+                    "type": "string"
+                },
+                "HostPort": {
+                    "description": "Java agent host port",
+                    "type": "string"
+                },
+                "PrometheusPort": {
+                    "description": "Prometheus exporter port",
+                    "type": "string"
                 }
             },
             "additionalProperties": false

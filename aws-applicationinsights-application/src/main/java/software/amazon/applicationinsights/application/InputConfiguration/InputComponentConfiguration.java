@@ -6,6 +6,7 @@ import software.amazon.applicationinsights.application.Alarm;
 import software.amazon.applicationinsights.application.AlarmMetric;
 import software.amazon.applicationinsights.application.ComponentConfiguration;
 import software.amazon.applicationinsights.application.ConfigurationDetails;
+import software.amazon.applicationinsights.application.JMXPrometheusExporter;
 import software.amazon.applicationinsights.application.Log;
 import software.amazon.applicationinsights.application.SubComponentConfigurationDetails;
 import software.amazon.applicationinsights.application.SubComponentTypeConfiguration;
@@ -39,6 +40,9 @@ public class InputComponentConfiguration {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<InputAlarm> alarms;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private InputJMXPrometheusExporter jmxPrometheusExporter;
 
     public List<InputAlarmMetric> getAlarmMetrics() {
         return alarmMetrics;
@@ -78,6 +82,14 @@ public class InputComponentConfiguration {
 
     public void setAlarms(final List<InputAlarm> alarms) {
         this.alarms = alarms;
+    }
+
+    public InputJMXPrometheusExporter getJMXPrometheusExporter() {
+        return jmxPrometheusExporter;
+    }
+
+    public void setJMXPrometheusExporter(final InputJMXPrometheusExporter jmxPrometheusExporter) {
+        this.jmxPrometheusExporter = jmxPrometheusExporter;
     }
 
     public InputComponentConfiguration(final ComponentConfiguration componentConfiguration) {
@@ -127,6 +139,11 @@ public class InputComponentConfiguration {
                 inputSubComponents.add(inputSubComponent);
             }
             this.subComponents = inputSubComponents;
+        }
+
+        JMXPrometheusExporter jmxPrometheusExporter = configurationDetails.getJMXPrometheusExporter();
+        if (jmxPrometheusExporter != null) {
+            this.jmxPrometheusExporter = new InputJMXPrometheusExporter(jmxPrometheusExporter);
         }
     }
 
@@ -217,6 +234,13 @@ public class InputComponentConfiguration {
 
         if (!mergedSubComponents.isEmpty()) {
             this.subComponents = mergedSubComponents;
+        }
+
+        JMXPrometheusExporter defaultOverwriteJmxPrometheusExporter = defaultOverwriteConfigurationDetails.getJMXPrometheusExporter();
+        if (defaultOverwriteJmxPrometheusExporter != null) {
+            this.jmxPrometheusExporter = new InputJMXPrometheusExporter(defaultOverwriteJmxPrometheusExporter);
+        } else {
+            this.jmxPrometheusExporter = recommendedInputConfig.getJMXPrometheusExporter();
         }
     }
 
