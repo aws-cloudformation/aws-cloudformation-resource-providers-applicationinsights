@@ -488,7 +488,8 @@
                     "description": "The sub component type.",
                     "type": "string",
                     "enum": [
-                        "EC2_INSTANCE"
+                        "AWS::EC2::Instance",
+                        "AWS::EC2::Volume"
                     ]
                 },
                 "SubComponentConfigurationDetails": {

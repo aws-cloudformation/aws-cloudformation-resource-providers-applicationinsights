@@ -11,7 +11,12 @@ import software.amazon.applicationinsights.application.SubComponentConfiguration
 import software.amazon.applicationinsights.application.SubComponentTypeConfiguration;
 import software.amazon.applicationinsights.application.WindowsEvent;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -30,7 +35,7 @@ public class InputComponentConfiguration {
     private List<InputWindowsEvent> windowsEvents;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private InputInstances instances;
+    private List<InputSubComponent> subComponents;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<InputAlarm> alarms;
@@ -59,12 +64,12 @@ public class InputComponentConfiguration {
         this.windowsEvents = windowsEvents;
     }
 
-    public InputInstances getInstances() {
-        return this.instances;
+    public List<InputSubComponent> getSubComponents() {
+        return this.subComponents;
     }
 
-    public void setInstances(final InputInstances instances) {
-        this.instances = instances;
+    public void setSubComponents(final List<InputSubComponent> subComponents) {
+        this.subComponents = subComponents;
     }
 
     public List<InputAlarm> getAlarms() {
@@ -116,13 +121,12 @@ public class InputComponentConfiguration {
                 componentConfiguration.getSubComponentTypeConfigurations();
 
         if (subComponentTypeConfigurations != null && !subComponentTypeConfigurations.isEmpty()) {
+            List<InputSubComponent> inputSubComponents = new ArrayList<>();
             for (SubComponentTypeConfiguration subComponentTypeConfiguration : subComponentTypeConfigurations) {
-                if (subComponentTypeConfiguration.getSubComponentType() == "EC2_INSTANCE") {
-                    InputInstances inputInstances = new InputInstances(
-                            subComponentTypeConfiguration.getSubComponentConfigurationDetails());
-                    this.instances = inputInstances;
-                }
+                InputSubComponent inputSubComponent = new InputSubComponent(subComponentTypeConfiguration);
+                inputSubComponents.add(inputSubComponent);
             }
+            this.subComponents = inputSubComponents;
         }
     }
 
@@ -173,25 +177,46 @@ public class InputComponentConfiguration {
             this.alarms = recommendedInputConfig.getAlarms();
         }
 
-        List<SubComponentTypeConfiguration> defaultOverwriteSubComponentTypeConfigurations =
-                defaultOverwriteComponentConfiguration.getSubComponentTypeConfigurations();
+        Map<String, SubComponentTypeConfiguration> defaultOverwriteSubComponentTypeConfigurationsMap =
+            (defaultOverwriteComponentConfiguration.getSubComponentTypeConfigurations() == null ||
+                defaultOverwriteComponentConfiguration.getSubComponentTypeConfigurations().isEmpty()) ?
+                Collections.emptyMap() :
+                defaultOverwriteComponentConfiguration.getSubComponentTypeConfigurations().stream()
+                    .collect(Collectors.toMap(SubComponentTypeConfiguration::getSubComponentType, Function.identity()));
 
-        boolean instancesOverwritten = false;
-        if (defaultOverwriteSubComponentTypeConfigurations != null &&
-                !defaultOverwriteSubComponentTypeConfigurations.isEmpty()) {
-            for (SubComponentTypeConfiguration defaultOverwriteSubComponentTypeConfiguration :
-                    defaultOverwriteSubComponentTypeConfigurations) {
-                if (defaultOverwriteSubComponentTypeConfiguration.getSubComponentType().equals("EC2_INSTANCE")) {
-                    InputInstances inputInstances = new InputInstances(
-                            recommendedInputConfig.getInstances(),
-                            defaultOverwriteSubComponentTypeConfiguration.getSubComponentConfigurationDetails());
-                    this.instances = inputInstances;
-                    instancesOverwritten = true;
-                }
-            }
-        }
-        if (!instancesOverwritten) {
-            this.instances = recommendedInputConfig.getInstances();
+        Map<String, InputSubComponent> recommendedSubComponentsMap =
+            (recommendedInputConfig.getSubComponents() == null ||  recommendedInputConfig.getSubComponents().isEmpty()) ?
+                Collections.emptyMap() :
+                recommendedInputConfig.getSubComponents().stream()
+                    .collect(Collectors.toMap(InputSubComponent::getSubComponentType, Function.identity()));
+
+        List<InputSubComponent> mergedSubComponents = new ArrayList<>();
+
+        // If sub component type not recommended but specified by customer, set it as is
+        Set<String> overwriteOnlySubComponentTypes = defaultOverwriteSubComponentTypeConfigurationsMap.keySet();
+        overwriteOnlySubComponentTypes.removeAll(recommendedSubComponentsMap.keySet());
+        overwriteOnlySubComponentTypes.stream().forEach(componentType -> {
+            mergedSubComponents.add(new InputSubComponent(defaultOverwriteSubComponentTypeConfigurationsMap.get(componentType)));
+        });
+
+        // If sub component type recommended but not overwritten by customer, set it as recommended config
+        Set<String> recommendOnlySubComponentTypes = recommendedSubComponentsMap.keySet();
+        recommendOnlySubComponentTypes.removeAll(defaultOverwriteSubComponentTypeConfigurationsMap.keySet());
+        recommendOnlySubComponentTypes.stream().forEach(componentType -> {
+            mergedSubComponents.add(recommendedSubComponentsMap.get(componentType));
+        });
+
+        // If sub component type both recommended and overwritten by customers, merge both configs
+        Set<String> mergedComponentTypes = defaultOverwriteSubComponentTypeConfigurationsMap.keySet();
+        mergedComponentTypes.retainAll(recommendedSubComponentsMap.keySet());
+        mergedComponentTypes.stream().forEach(componentType -> {
+            mergedSubComponents.add(new InputSubComponent(
+                recommendedSubComponentsMap.get(componentType),
+                defaultOverwriteSubComponentTypeConfigurationsMap.get(componentType)));
+        });
+
+        if (!mergedSubComponents.isEmpty()) {
+            this.subComponents = mergedSubComponents;
         }
     }
 
