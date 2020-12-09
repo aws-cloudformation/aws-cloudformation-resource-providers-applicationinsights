@@ -204,7 +204,9 @@
                         "MYSQL",
                         "POSTGRESQL",
                         "DEFAULT",
-                        "CUSTOM"
+                        "CUSTOM",
+                        "JAVA_JMX",
+                        "ORACLE"
                     ]
                 },
                 "ComponentConfigurationMode": {
