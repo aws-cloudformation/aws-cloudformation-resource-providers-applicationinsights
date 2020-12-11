@@ -227,23 +227,19 @@
                     "$ref": "#/definitions/ComponentConfiguration"
                 }
             },
-            "allOf": [
+            "required": [
+                "Tier",
+                "ComponentConfigurationMode"
+            ],
+            "oneOf": [
                 {
                     "required": [
-                        "Tier",
-                        "ComponentConfigurationMode"
-                    ],
-                    "oneOf": [
-                        {
-                            "required": [
-                                "ComponentName"
-                            ]
-                        },
-                        {
-                            "required": [
-                                "ComponentARN"
-                            ]
-                        }
+                        "ComponentName"
+                    ]
+                },
+                {
+                    "required": [
+                        "ComponentARN"
                     ]
                 }
             ],
