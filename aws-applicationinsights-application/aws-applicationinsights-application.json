@@ -99,7 +99,7 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 128,
-                    "pattern": "^[\\d\\w-_.+]*$"
+                    "pattern": "^[\\d\\w\\-_.+]*$"
                 },
                 "ResourceList": {
                     "description": "The list of resource ARNs that belong to the component.",
@@ -183,7 +183,7 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 128,
-                    "pattern": "^[\\d\\w-_.+]*$"
+                    "pattern": "^[\\d\\w\\-_.+]*$"
                 },
                 "ComponentARN": {
                     "description": "The ARN of the compnonent.",
@@ -195,19 +195,7 @@
                 "Tier": {
                     "description": "The tier of the application component.",
                     "type": "string",
-                    "enum": [
-                        "DOT_NET_WORKER",
-                        "DOT_NET_WEB",
-                        "DOT_NET_CORE",
-                        "SQL_SERVER",
-                        "SQL_SERVER_ALWAYSON_AVAILABILITY_GROUP",
-                        "MYSQL",
-                        "POSTGRESQL",
-                        "DEFAULT",
-                        "CUSTOM",
-                        "JAVA_JMX",
-                        "ORACLE"
-                    ]
+		    "pattern": "^[A-Z][[A-Z]_]*$"
                 },
                 "ComponentConfigurationMode": {
                     "description": "The component monitoring configuration mode.",
@@ -385,22 +373,7 @@
                 "LogType": {
                     "description": "The log type decides the log patterns against which Application Insights analyzes the log.",
                     "type": "string",
-                    "enum": [
-                        "SQL_SERVER",
-                        "MYSQL",
-                        "MYSQL_SLOW_QUERY",
-                        "POSTGRESQL",
-                        "IIS",
-                        "APPLICATION",
-                        "WINDOWS_EVENTS",
-                        "WINDOWS_EVENTS_GENERIC_ERRORS",
-                        "SQL_SERVER_ALWAYSON_AVAILABILITY_GROUP",
-                        "DEFAULT",
-                        "CUSTOM",
-                        "STEP_FUNCTION",
-                        "API_GATEWAY_ACCESS",
-                        "API_GATEWAY_EXECUTION"
-                    ]
+		    "pattern": "^[A-Z][[A-Z]_]*$"
                 },
                 "Encoding": {
                     "description": "The type of encoding of the logs to be monitored.",
