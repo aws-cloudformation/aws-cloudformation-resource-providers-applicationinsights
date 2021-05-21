@@ -5,6 +5,7 @@ Description: AWS SAM template for the AWS::ApplicationInsights::Application reso
 Globals:
   Function:
     Timeout: 60  # docker start-up times can be long for SAM CLI
+    MemorySize: 2048
 
 Resources:
   TypeFunction:
@@ -12,12 +13,11 @@ Resources:
     Properties:
       Handler: software.amazon.applicationinsights.application.HandlerWrapper::handleRequest
       Runtime: java8
-      CodeUri: ./target/aws-applicationinsights-application-handler-1.0-SNAPSHOT.jar
+      CodeUri: ./target/aws-applicationinsights-application-1.0.jar
 
   TestEntrypoint:
     Type: AWS::Serverless::Function
     Properties:
       Handler: software.amazon.applicationinsights.application.HandlerWrapper::testEntrypoint
       Runtime: java8
-      CodeUri: ./target/aws-applicationinsights-application-handler-1.0-SNAPSHOT.jar
-
+      CodeUri: ./target/aws-applicationinsights-application-1.0.jar

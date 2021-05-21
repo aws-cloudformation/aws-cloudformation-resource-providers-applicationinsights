@@ -52,12 +52,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class HandlerHelper {
     private static final String DEFAULT_COMPONENT_CONFIG_MODE = "DEFAULT";
     private static final String CUSTOM_COMPONENT_CONFIG_MODE = "CUSTOM";
     private static final String DEFAULT_WITH_OVERWRITE_COMPONENT_CONFIG_MODE = "DEFAULT_WITH_OVERWRITE";
+    private static final int MAX_COMPONENTS_PER_LIST_REQUEST = 40;
+    private static final Pattern APPLICATION_INSIGHTS_APPLICATION_ARN_PATTERN = Pattern.compile("^arn:.*:applicationinsights:.*:[0-9]{12}:application/resource-group/(.*)");
 
     public static boolean doesApplicationExist(
             String resourceGroupName,
@@ -314,16 +318,11 @@ public class HandlerHelper {
             ResourceModel model,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient) {
-        ListComponentsResponse response = proxy.injectCredentialsAndInvokeV2(ListComponentsRequest.builder()
-                        .resourceGroupName(model.getResourceGroupName())
-                        .build(),
-                applicationInsightsClient::listComponents);
+        List<ApplicationComponent> appComponents = listApplicationComponents(model.getResourceGroupName(), proxy, applicationInsightsClient);
 
-        return response.applicationComponentList() == null ?
-                new ArrayList<>() :
-                response.applicationComponentList().stream()
-                        .map(applicationComponent -> applicationComponent.componentName())
-                        .collect(Collectors.toList());
+        return appComponents.stream()
+            .map(applicationComponent -> applicationComponent.componentName())
+            .collect(Collectors.toList());
     }
 
     public static void udpateApplicationInsightsApplication(
@@ -526,8 +525,8 @@ public class HandlerHelper {
             String resourceGroupName,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient) {
-        ListComponentsResponse listComponentsResponse = listApplicationComponents(resourceGroupName, proxy, applicationInsightsClient);
-        return listComponentsResponse.applicationComponentList().stream()
+        List<ApplicationComponent> appComponents = listApplicationComponents(resourceGroupName, proxy, applicationInsightsClient);
+        return appComponents.stream()
                 .filter(component -> component.resourceType().equals("CustomComponent"))
                 .map(component -> component.componentName())
                 .collect(Collectors.toList());
@@ -545,14 +544,28 @@ public class HandlerHelper {
                 applicationInsightsClient::describeComponent);
     }
 
-    private static ListComponentsResponse listApplicationComponents(
+    private static List<ApplicationComponent> listApplicationComponents(
             String resourceGroupName,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient) {
-        return proxy.injectCredentialsAndInvokeV2(ListComponentsRequest.builder()
-                        .resourceGroupName(resourceGroupName)
-                        .build(),
+        List<ApplicationComponent> appComponents = new ArrayList<>();
+        String nextToken = null;
+
+        do {
+            ListComponentsResponse response = proxy.injectCredentialsAndInvokeV2(ListComponentsRequest.builder()
+                    .resourceGroupName(resourceGroupName)
+                    .maxResults(MAX_COMPONENTS_PER_LIST_REQUEST)
+                    .nextToken(nextToken)
+                    .build(),
                 applicationInsightsClient::listComponents);
+
+            if (response.applicationComponentList() != null) {
+                appComponents.addAll(response.applicationComponentList());
+            }
+            nextToken = response.nextToken();
+        } while (nextToken != null);
+
+        return appComponents;
     }
 
     public static void deleteCustomComponent(
@@ -779,8 +792,8 @@ public class HandlerHelper {
         }
 
         // set readModel customComponents attribute
-        ListComponentsResponse listComponentsResponse = listApplicationComponents(resourceGroupName, proxy, applicationInsightsClient);
-        List<ApplicationComponent> appCustomComponents = listComponentsResponse.applicationComponentList().stream()
+        List<ApplicationComponent> appComponents = listApplicationComponents(resourceGroupName, proxy, applicationInsightsClient);
+        List<ApplicationComponent> appCustomComponents = appComponents.stream()
                 .filter(component -> component.resourceType().equals("CustomComponent"))
                 .collect(Collectors.toList());
         if (appCustomComponents != null && !appCustomComponents.isEmpty()) {
@@ -915,5 +928,11 @@ public class HandlerHelper {
         }
 
         return false;
+    }
+
+    public static String extractResourceGroupNameFromApplicationArn(final String applicationArn) {
+        final Matcher matcher = APPLICATION_INSIGHTS_APPLICATION_ARN_PATTERN.matcher(applicationArn);
+        matcher.matches();
+        return matcher.group(1);
     }
 }

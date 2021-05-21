@@ -373,7 +373,7 @@
                 "LogType": {
                     "description": "The log type decides the log patterns against which Application Insights analyzes the log.",
                     "type": "string",
-		    "pattern": "^[A-Z][[A-Z]_]*$"
+                    "pattern": "^[A-Z][[A-Z]_]*$"
                 },
                 "Encoding": {
                     "description": "The type of encoding of the logs to be monitored.",
