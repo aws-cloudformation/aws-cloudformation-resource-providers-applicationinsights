@@ -20,3 +20,5 @@ target/
 rpdk.log
 
 docs/
+wrapper/
+aws-applicationinsights-application.zip
