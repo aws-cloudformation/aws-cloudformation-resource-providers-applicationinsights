@@ -1,9 +1,9 @@
 package software.amazon.applicationinsights.application;
 
-import com.amazon.junit.extension.EnvironmentVariable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junitpioneer.jupiter.SetEnvironmentVariable;
 import org.mockito.Mock;
 import org.mockito.exceptions.misusing.InvalidUseOfMatchersException;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -18,7 +18,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@EnvironmentVariable(key = "AWS_REGION", value = "us-east-1")
+@SetEnvironmentVariable(key = "AWS_REGION", value = "us-east-1")
 public class ReadHandlerTest {
 
     private static final String RESOURCE_GROUP_NAME = "TestRGName";
