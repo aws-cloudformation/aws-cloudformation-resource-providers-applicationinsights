@@ -85,8 +85,11 @@ public class HandlerHelper {
                         // optional fields
                         .opsCenterEnabled(model.getOpsCenterEnabled())
                         .opsItemSNSTopicArn(model.getOpsItemSNSTopicArn())
-                        .cweMonitorEnabled(model.getCWEMonitorEnabled())
+                        // enable CloudWatch Events monitoring automatically, if not specified by customer
+                        .cweMonitorEnabled(model.getCWEMonitorEnabled() == null ? true : model.getCWEMonitorEnabled())
                         .tags(translateModelTagsToSdkTags(model.getTags()))
+                        .autoCreate(model.getAutoConfigurationEnabled())
+                        .autoConfigEnabled(model.getAutoConfigurationEnabled())
                         .build(),
                 applicationInsightsClient::createApplication);
     }
@@ -335,8 +338,10 @@ public class HandlerHelper {
                         // optional fields
                         .opsCenterEnabled(model.getOpsCenterEnabled() == null ? false : model.getOpsCenterEnabled())
                         .opsItemSNSTopicArn(model.getOpsItemSNSTopicArn())
-                        .cweMonitorEnabled(model.getCWEMonitorEnabled() == null ? false : model.getCWEMonitorEnabled())
+                        // enable CloudWatch Events monitoring automatically, if not specified by customer
+                        .cweMonitorEnabled(model.getCWEMonitorEnabled() == null ? true : model.getCWEMonitorEnabled())
                         .removeSNSTopic(model.getOpsItemSNSTopicArn() == null ? true : false)
+                        .autoConfigEnabled(model.getAutoConfigurationEnabled() == null ? false : model.getAutoConfigurationEnabled())
                         .build(),
                 applicationInsightsClient::updateApplication);
     }
