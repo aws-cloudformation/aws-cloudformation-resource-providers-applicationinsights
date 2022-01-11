@@ -2,11 +2,15 @@ package software.amazon.applicationinsights.application.InputConfiguration;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Getter;
+import lombok.Setter;
 import software.amazon.applicationinsights.application.Alarm;
 import software.amazon.applicationinsights.application.AlarmMetric;
 import software.amazon.applicationinsights.application.ComponentConfiguration;
 import software.amazon.applicationinsights.application.ConfigurationDetails;
 import software.amazon.applicationinsights.application.JMXPrometheusExporter;
+import software.amazon.applicationinsights.application.HANAPrometheusExporter;
+import software.amazon.applicationinsights.application.HAClusterPrometheusExporter;
 import software.amazon.applicationinsights.application.Log;
 import software.amazon.applicationinsights.application.SubComponentConfigurationDetails;
 import software.amazon.applicationinsights.application.SubComponentTypeConfiguration;
@@ -14,6 +18,7 @@ import software.amazon.applicationinsights.application.WindowsEvent;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,71 +31,45 @@ import java.util.stream.Collectors;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class InputComponentConfiguration {
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<InputAlarmMetric> alarmMetrics;
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<InputLog> logs;
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<InputWindowsEvent> windowsEvents;
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<InputSubComponent> subComponents;
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<InputAlarm> alarms;
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private InputJMXPrometheusExporter jmxPrometheusExporter;
 
-    public List<InputAlarmMetric> getAlarmMetrics() {
-        return alarmMetrics;
-    }
+    @Setter
+    @Getter
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private InputHANAPrometheusExporter hanaPrometheusExporter;
 
-    public void setAlarmMetrics(final List<InputAlarmMetric> alarmMetrics) {
-        this.alarmMetrics = alarmMetrics;
-    }
-
-    public List<InputLog> getLogs() {
-        return logs;
-    }
-
-    public void setLogs(final List<InputLog> logs) {
-        this.logs = logs;
-    }
-
-    public List<InputWindowsEvent> getWindowsEvents() {
-        return windowsEvents;
-    }
-
-    public void setWindowsEvents(final List<InputWindowsEvent> windowsEvents) {
-        this.windowsEvents = windowsEvents;
-    }
-
-    public List<InputSubComponent> getSubComponents() {
-        return this.subComponents;
-    }
-
-    public void setSubComponents(final List<InputSubComponent> subComponents) {
-        this.subComponents = subComponents;
-    }
-
-    public List<InputAlarm> getAlarms() {
-        return alarms;
-    }
-
-    public void setAlarms(final List<InputAlarm> alarms) {
-        this.alarms = alarms;
-    }
-
-    public InputJMXPrometheusExporter getJMXPrometheusExporter() {
-        return jmxPrometheusExporter;
-    }
-
-    public void setJMXPrometheusExporter(final InputJMXPrometheusExporter jmxPrometheusExporter) {
-        this.jmxPrometheusExporter = jmxPrometheusExporter;
-    }
+    @Setter
+    @Getter
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private InputHAClusterPrometheusExporter haClusterPrometheusExporter;
 
     public InputComponentConfiguration(final ComponentConfiguration componentConfiguration) {
         ConfigurationDetails configurationDetails =
@@ -144,6 +123,16 @@ public class InputComponentConfiguration {
         JMXPrometheusExporter jmxPrometheusExporter = configurationDetails.getJMXPrometheusExporter();
         if (jmxPrometheusExporter != null) {
             this.jmxPrometheusExporter = new InputJMXPrometheusExporter(jmxPrometheusExporter);
+        }
+
+        HANAPrometheusExporter hanaPrometheusExporter = configurationDetails.getHANAPrometheusExporter();
+        if (hanaPrometheusExporter != null) {
+            this.hanaPrometheusExporter = new InputHANAPrometheusExporter(hanaPrometheusExporter);
+        }
+
+        HAClusterPrometheusExporter haClusterPrometheusExporter = configurationDetails.getHAClusterPrometheusExporter();
+        if (haClusterPrometheusExporter != null) {
+            this.haClusterPrometheusExporter = new InputHAClusterPrometheusExporter(haClusterPrometheusExporter);
         }
     }
 
@@ -210,21 +199,21 @@ public class InputComponentConfiguration {
         List<InputSubComponent> mergedSubComponents = new ArrayList<>();
 
         // If sub component type not recommended but specified by customer, set it as is
-        Set<String> overwriteOnlySubComponentTypes = defaultOverwriteSubComponentTypeConfigurationsMap.keySet();
+        Set<String> overwriteOnlySubComponentTypes = new HashSet<>(defaultOverwriteSubComponentTypeConfigurationsMap.keySet());
         overwriteOnlySubComponentTypes.removeAll(recommendedSubComponentsMap.keySet());
         overwriteOnlySubComponentTypes.stream().forEach(componentType -> {
             mergedSubComponents.add(new InputSubComponent(defaultOverwriteSubComponentTypeConfigurationsMap.get(componentType)));
         });
 
         // If sub component type recommended but not overwritten by customer, set it as recommended config
-        Set<String> recommendOnlySubComponentTypes = recommendedSubComponentsMap.keySet();
+        Set<String> recommendOnlySubComponentTypes = new HashSet<>(recommendedSubComponentsMap.keySet());
         recommendOnlySubComponentTypes.removeAll(defaultOverwriteSubComponentTypeConfigurationsMap.keySet());
         recommendOnlySubComponentTypes.stream().forEach(componentType -> {
             mergedSubComponents.add(recommendedSubComponentsMap.get(componentType));
         });
 
         // If sub component type both recommended and overwritten by customers, merge both configs
-        Set<String> mergedComponentTypes = defaultOverwriteSubComponentTypeConfigurationsMap.keySet();
+        Set<String> mergedComponentTypes = new HashSet<>(defaultOverwriteSubComponentTypeConfigurationsMap.keySet());
         mergedComponentTypes.retainAll(recommendedSubComponentsMap.keySet());
         mergedComponentTypes.stream().forEach(componentType -> {
             mergedSubComponents.add(new InputSubComponent(
@@ -240,7 +229,21 @@ public class InputComponentConfiguration {
         if (defaultOverwriteJmxPrometheusExporter != null) {
             this.jmxPrometheusExporter = new InputJMXPrometheusExporter(defaultOverwriteJmxPrometheusExporter);
         } else {
-            this.jmxPrometheusExporter = recommendedInputConfig.getJMXPrometheusExporter();
+            this.jmxPrometheusExporter = recommendedInputConfig.getJmxPrometheusExporter();
+        }
+
+        HANAPrometheusExporter defaultOverwriteHANAPrometheusExporter = defaultOverwriteConfigurationDetails.getHANAPrometheusExporter();
+        if (defaultOverwriteHANAPrometheusExporter != null) {
+            this.hanaPrometheusExporter = new InputHANAPrometheusExporter(defaultOverwriteHANAPrometheusExporter);
+        } else {
+            this.hanaPrometheusExporter = recommendedInputConfig.getHanaPrometheusExporter();
+        }
+
+        HAClusterPrometheusExporter defaultOverwriteHAClusterPrometheusExporter = defaultOverwriteConfigurationDetails.getHAClusterPrometheusExporter();
+        if (defaultOverwriteHAClusterPrometheusExporter != null) {
+            this.haClusterPrometheusExporter = new InputHAClusterPrometheusExporter(defaultOverwriteHAClusterPrometheusExporter);
+        } else {
+            this.haClusterPrometheusExporter = recommendedInputConfig.getHaClusterPrometheusExporter();
         }
     }
 

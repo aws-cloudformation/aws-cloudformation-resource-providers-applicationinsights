@@ -1,42 +1,26 @@
 package software.amazon.applicationinsights.application.InputConfiguration;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Getter;
+import lombok.Setter;
 import software.amazon.applicationinsights.application.JMXPrometheusExporter;
 
 public class InputJMXPrometheusExporter {
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String jmxURL;
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String hostPort;
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String prometheusPort;
-
-    public String getJmxURL() {
-        return jmxURL;
-    }
-
-    public void setJmxURL(final String jmxURL) {
-        this.jmxURL = jmxURL;
-    }
-
-    public String getHostPort() {
-        return hostPort;
-    }
-
-    public void setHostPort(final String hostPort) {
-        this.hostPort = hostPort;
-    }
-
-    public String getPrometheusPort() {
-        return prometheusPort;
-    }
-
-    public void setPrometheusPort(final String prometheusPort) {
-        this.prometheusPort = prometheusPort;
-    }
 
     public InputJMXPrometheusExporter(final JMXPrometheusExporter jmxPrometheusExporter) {
         this.jmxURL = jmxPrometheusExporter.getJMXURL();

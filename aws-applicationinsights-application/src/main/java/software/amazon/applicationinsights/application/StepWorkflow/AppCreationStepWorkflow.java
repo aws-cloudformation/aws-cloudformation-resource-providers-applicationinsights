@@ -1,7 +1,6 @@
 package software.amazon.applicationinsights.application.StepWorkflow;
 
 import software.amazon.applicationinsights.application.CallbackContext;
-import software.amazon.applicationinsights.application.ExceptionMapper;
 import software.amazon.applicationinsights.application.HandlerHelper;
 import software.amazon.applicationinsights.application.ResourceModel;
 import software.amazon.awssdk.services.applicationinsights.ApplicationInsightsClient;
@@ -10,6 +9,7 @@ import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 
 import static software.amazon.applicationinsights.application.Constants.APP_CREATION_FINISHED_LIFECYCLE;
+import static software.amazon.applicationinsights.application.Constants.CONFIGURATION_FINISHED_LIFECYCLE;
 
 public class AppCreationStepWorkflow extends BaseStepWorkflow {
 
@@ -37,10 +37,11 @@ public class AppCreationStepWorkflow extends BaseStepWorkflow {
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient,
             Logger logger) {
-        return HandlerHelper.describeApplicationInsightsApplication(resourceGroupName, proxy, applicationInsightsClient)
+        String lifeCycle =  HandlerHelper.describeApplicationInsightsApplication(resourceGroupName, proxy, applicationInsightsClient)
                 .applicationInfo()
-                .lifeCycle()
-                .equals(APP_CREATION_FINISHED_LIFECYCLE);
+                .lifeCycle();
+
+        return lifeCycle.equals(APP_CREATION_FINISHED_LIFECYCLE) || lifeCycle.equals(CONFIGURATION_FINISHED_LIFECYCLE);
     }
 
     @Override

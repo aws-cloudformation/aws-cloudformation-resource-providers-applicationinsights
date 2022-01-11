@@ -2,6 +2,8 @@ package software.amazon.applicationinsights.application.InputConfiguration;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Getter;
+import lombok.Setter;
 import software.amazon.applicationinsights.application.WindowsEvent;
 
 import java.util.List;
@@ -13,49 +15,25 @@ import java.util.Objects;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public final class InputWindowsEvent {
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String logGroupName;
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String eventName;
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<String> eventLevels;
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String patternSet;
-
-    public String getLogGroupName() {
-        return logGroupName;
-    }
-
-    public void setLogGroupName(final String logGroupName) {
-        this.logGroupName = logGroupName;
-    }
-
-    public String getEventName() {
-        return eventName;
-    }
-
-    public void setEventName(final String eventName) {
-        this.eventName = eventName;
-    }
-
-    public List<String> getEventLevels() {
-        return eventLevels;
-    }
-
-    public void setEventLevels(final List<String> eventLevels) {
-        this.eventLevels = eventLevels;
-    }
-
-    public String getPatternSet() {
-        return patternSet;
-    }
-
-    public void setPatternSet(final String patternSet) {
-        this.patternSet = patternSet;
-    }
 
     public InputWindowsEvent(final WindowsEvent windowsEvent) {
         this.logGroupName = windowsEvent.getLogGroupName();
