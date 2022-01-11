@@ -7,9 +7,23 @@ import org.junitpioneer.jupiter.SetEnvironmentVariable;
 import org.mockito.Mock;
 import org.mockito.exceptions.misusing.InvalidUseOfMatchersException;
 import org.mockito.junit.jupiter.MockitoExtension;
+import software.amazon.awssdk.services.applicationinsights.model.ApplicationInfo;
+import software.amazon.awssdk.services.applicationinsights.model.ApplicationInsightsRequest;
+import software.amazon.awssdk.services.applicationinsights.model.DescribeApplicationRequest;
+import software.amazon.awssdk.services.applicationinsights.model.DescribeApplicationResponse;
+import software.amazon.awssdk.services.applicationinsights.model.ListComponentsRequest;
+import software.amazon.awssdk.services.applicationinsights.model.ListComponentsResponse;
+import software.amazon.awssdk.services.applicationinsights.model.ListLogPatternsRequest;
+import software.amazon.awssdk.services.applicationinsights.model.ListLogPatternsResponse;
+import software.amazon.awssdk.services.applicationinsights.model.ListTagsForResourceRequest;
+import software.amazon.awssdk.services.applicationinsights.model.ListTagsForResourceResponse;
+import software.amazon.awssdk.services.applicationinsights.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.applicationinsights.model.Tag;
-import software.amazon.awssdk.services.applicationinsights.model.*;
-import software.amazon.cloudformation.proxy.*;
+import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
+import software.amazon.cloudformation.proxy.Logger;
+import software.amazon.cloudformation.proxy.OperationStatus;
+import software.amazon.cloudformation.proxy.ProgressEvent;
+import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 import java.util.Arrays;
 

@@ -1,33 +1,23 @@
 package software.amazon.applicationinsights.application.InputConfiguration;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Getter;
+import lombok.Setter;
 import software.amazon.applicationinsights.application.Alarm;
 
 /**
  * Data class for InputAlarm
  */
 public class InputAlarm {
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String alarmName;
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String severity;
-
-    public String getAlarmName() {
-        return alarmName;
-    }
-
-    public void setAlarmName(final String alarmName) {
-        this.alarmName = alarmName;
-    }
-
-    public String getSeverity() {
-        return severity;
-    }
-
-    public void setSeverity(final String severity) {
-        this.severity = severity;
-    }
 
     public InputAlarm(final Alarm alarm) {
         this.alarmName = alarm.getAlarmName();

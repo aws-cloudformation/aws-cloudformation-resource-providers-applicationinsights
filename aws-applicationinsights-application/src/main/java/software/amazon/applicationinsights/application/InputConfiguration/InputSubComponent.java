@@ -2,6 +2,8 @@ package software.amazon.applicationinsights.application.InputConfiguration;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Getter;
+import lombok.Setter;
 import software.amazon.applicationinsights.application.AlarmMetric;
 import software.amazon.applicationinsights.application.Log;
 import software.amazon.applicationinsights.application.SubComponentConfigurationDetails;
@@ -17,49 +19,25 @@ import java.util.stream.Collectors;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class InputSubComponent {
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String subComponentType;
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<InputAlarmMetric> alarmMetrics;
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<InputLog> logs;
 
+    @Setter
+    @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<InputWindowsEvent> windowsEvents;
-
-    public String getSubComponentType() {
-        return subComponentType;
-    }
-
-    public void setSubComponentType(final String subComponentType) {
-        this.subComponentType = subComponentType;
-    }
-
-    public List<InputAlarmMetric> getAlarmMetrics() {
-        return alarmMetrics;
-    }
-
-    public void setAlarmMetrics(final List<InputAlarmMetric> alarmMetrics) {
-        this.alarmMetrics = alarmMetrics;
-    }
-
-    public List<InputLog> getLogs() {
-        return logs;
-    }
-
-    public void setLogs(final List<InputLog> logs) {
-        this.logs = logs;
-    }
-
-    public List<InputWindowsEvent> getWindowsEvents() {
-        return windowsEvents;
-    }
-
-    public void setWindowsEvents(final List<InputWindowsEvent> windowsEvents) {
-        this.windowsEvents = windowsEvents;
-    }
 
     public InputSubComponent(final SubComponentTypeConfiguration subComponentTypeConfiguration) {
         this.subComponentType = subComponentTypeConfiguration.getSubComponentType();
