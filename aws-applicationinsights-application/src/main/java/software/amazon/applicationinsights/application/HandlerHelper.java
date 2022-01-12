@@ -328,7 +328,7 @@ public class HandlerHelper {
             .collect(Collectors.toList());
     }
 
-    public static void udpateApplicationInsightsApplication(
+    public static void updateApplicationInsightsApplication(
             ResourceModel model,
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient) {
@@ -909,26 +909,35 @@ public class HandlerHelper {
     }
 
     public static boolean appNeedsUpdate(ResourceModel model, DescribeApplicationResponse response) {
-        Boolean newCWEMonitorEnabled = model.getCWEMonitorEnabled() == null ?
-                false : model.getCWEMonitorEnabled();
-        Boolean preCWEMonitorEnabled = response.applicationInfo().cweMonitorEnabled() == null ?
-                false : response.applicationInfo().cweMonitorEnabled();
+        // CWEEnable = null from cfn model means its true by default.
+        Boolean newCWEMonitorEnabled = model.getCWEMonitorEnabled() == null || model.getCWEMonitorEnabled();
+        Boolean preCWEMonitorEnabled = response.applicationInfo().cweMonitorEnabled() != null && response.applicationInfo().cweMonitorEnabled();
         if (newCWEMonitorEnabled != preCWEMonitorEnabled) {
             return true;
         }
 
-        Boolean newOpsCenterEnabled = model.getOpsCenterEnabled() == null ?
-                false : model.getOpsCenterEnabled();
-        Boolean preOpsCenterEnabled = response.applicationInfo().opsCenterEnabled() == null ?
-                false : response.applicationInfo().opsCenterEnabled();
+        Boolean newOpsCenterEnabled = model.getOpsCenterEnabled() != null && model.getOpsCenterEnabled();
+        Boolean preOpsCenterEnabled = response.applicationInfo().opsCenterEnabled() != null && response.applicationInfo().opsCenterEnabled();
         if (newOpsCenterEnabled != preOpsCenterEnabled) {
             return true;
         }
 
         String newOpsItemSNSTopicArn = model.getOpsItemSNSTopicArn();
         String preOpsItemSNSTopicArn = response.applicationInfo().opsItemSNSTopicArn();
-        if (!((newOpsItemSNSTopicArn == null && preOpsItemSNSTopicArn == null) ||
-                newOpsItemSNSTopicArn.equals(preOpsItemSNSTopicArn))) {
+
+        if((newOpsItemSNSTopicArn == null && preOpsItemSNSTopicArn != null) ||
+                (newOpsItemSNSTopicArn != null && preOpsItemSNSTopicArn == null)) {
+            return true;
+        }
+
+        if (!((newOpsItemSNSTopicArn == null && preOpsItemSNSTopicArn == null) || newOpsItemSNSTopicArn.equals(preOpsItemSNSTopicArn))) {
+            return true;
+        }
+
+        Boolean newAutoConfigurationEnable = model.getAutoConfigurationEnabled() != null && model.getAutoConfigurationEnabled();
+        Boolean preAutoConfigurationEnable = response.applicationInfo().autoConfigEnabled() != null && response.applicationInfo().autoConfigEnabled();
+
+        if (newAutoConfigurationEnable != preAutoConfigurationEnable) {
             return true;
         }
 

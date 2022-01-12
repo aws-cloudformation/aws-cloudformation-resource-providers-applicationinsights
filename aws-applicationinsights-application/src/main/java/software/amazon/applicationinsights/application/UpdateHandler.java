@@ -242,7 +242,7 @@ public class UpdateHandler extends BaseHandler<CallbackContext> {
 
             if (configComponentNamesWithoutMonitoringSettings != null && !configComponentNamesWithoutMonitoringSettings.isEmpty()) {
                 Boolean autoConfigurationEnabled = model.getAutoConfigurationEnabled();
-                if (autoConfigurationEnabled != null && autoConfigurationEnabled == true) {
+                if (autoConfigurationEnabled != null && autoConfigurationEnabled) {
                     successOrDefaultOrDisableConfigurationStepInitProgressEvent =
                             ProgressEvent.defaultInProgressHandler(
                                     CallbackContext.builder()
