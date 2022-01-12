@@ -48,6 +48,6 @@ public class AppUpdateStepWorkflow extends BaseStepWorkflow {
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient,
             Logger logger) throws IOException {
-        HandlerHelper.udpateApplicationInsightsApplication(model, proxy, applicationInsightsClient);
+        HandlerHelper.updateApplicationInsightsApplication(model, proxy, applicationInsightsClient);
     }
 }
