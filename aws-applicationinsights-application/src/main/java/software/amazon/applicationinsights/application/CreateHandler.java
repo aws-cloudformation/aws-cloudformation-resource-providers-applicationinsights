@@ -17,20 +17,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static software.amazon.applicationinsights.application.Constants.ACCOUNT_BASED_GROUPING_TYPE;
+import static software.amazon.applicationinsights.application.Constants.SHADOW_RG_PREFIX_ACCOUNT_BASED;
 import static software.amazon.applicationinsights.application.Constants.TRANSITION_CALLBACK_DELAY_SECONDS;
 
 public class CreateHandler extends BaseHandler<CallbackContext> {
-    static final int CREATE_STATUS_POLL_RETRIES = 60;
+    static final int CREATE_STATUS_POLL_RETRIES = 1800;
     static final String CREATE_TIMED_OUT_MESSAGE = "Timed out waiting for application creation.";
 
     private final ApplicationInsightsClient applicationInsightsClient = ApplicationInsightsClient.create();
 
     @Override
-    public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
-        final AmazonWebServicesClientProxy proxy,
-        final ResourceHandlerRequest<ResourceModel> request,
-        final CallbackContext callbackContext,
-        final Logger logger) {
+    public ProgressEvent<ResourceModel, CallbackContext> handleRequest(final AmazonWebServicesClientProxy proxy,
+                                                                       final ResourceHandlerRequest<ResourceModel> request,
+                                                                       final CallbackContext callbackContext,
+                                                                       final Logger logger) {
 
         final ResourceModel model = request.getDesiredResourceState();
 
@@ -50,6 +51,17 @@ public class CreateHandler extends BaseHandler<CallbackContext> {
                 callbackContext;
 
         logger.log("Callback Context: " + newCallbackContext.toString());
+
+        // For Account based application AppInsights creates a Resource Group with prefix "ApplicationInsights-", accounting for it
+        if ((ACCOUNT_BASED_GROUPING_TYPE).equals(model.getGroupingType())) {
+
+            logger.log(String.format("Create account level application for %s", model.getResourceGroupName()));
+
+            if (!model.getResourceGroupName().startsWith(SHADOW_RG_PREFIX_ACCOUNT_BASED)) {
+                logger.log(String.format("Add prefix ApplicationInsights- for %s", model.getResourceGroupName()));
+                model.setResourceGroupName(SHADOW_RG_PREFIX_ACCOUNT_BASED + model.getResourceGroupName());
+            }
+        }
 
         model.setApplicationARN(String.format("arn:%s:applicationinsights:%s:%s:application/resource-group/%s",
                 request.getAwsPartition(),

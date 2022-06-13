@@ -89,6 +89,7 @@ public class HandlerHelper {
                         .cweMonitorEnabled(model.getCWEMonitorEnabled() == null ? true : model.getCWEMonitorEnabled())
                         .tags(translateModelTagsToSdkTags(model.getTags()))
                         .autoCreate(model.getAutoConfigurationEnabled())
+                        .groupingType(model.getGroupingType())
                         .autoConfigEnabled(model.getAutoConfigurationEnabled())
                         .build(),
                 applicationInsightsClient::createApplication);
