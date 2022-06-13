@@ -68,6 +68,13 @@
             },
             "minItems": 1,
             "insertionOrder":  true
+        },
+        "GroupingType": {
+           "description": "The grouping type of the application",
+           "type": "string",
+           "enum": [
+                   "ACCOUNT_BASED"
+                   ]
         }
     },
     "definitions": {
@@ -590,7 +597,8 @@
                 "applicationinsights:DescribeComponentConfigurationRecommendation",
                 "applicationinsights:UpdateComponentConfiguration",
                 "applicationinsights:ListComponents"
-            ]
+            ],
+            "timeoutInMinutes": 600
         },
         "read": {
             "permissions": [
@@ -624,7 +632,8 @@
                 "applicationinsights:DescribeComponentConfiguration",
                 "applicationinsights:DescribeComponentConfigurationRecommendation",
                 "applicationinsights:UpdateComponentConfiguration"
-            ]
+            ],
+	    "timeoutInMinutes": 600
         },
         "delete": {
             "permissions": [

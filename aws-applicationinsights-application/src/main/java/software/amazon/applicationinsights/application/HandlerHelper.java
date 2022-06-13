@@ -39,6 +39,7 @@ import software.amazon.awssdk.services.applicationinsights.model.UpdateLogPatter
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import sun.java2d.loops.CustomComponent;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -89,6 +90,7 @@ public class HandlerHelper {
                         .cweMonitorEnabled(model.getCWEMonitorEnabled() == null ? true : model.getCWEMonitorEnabled())
                         .tags(translateModelTagsToSdkTags(model.getTags()))
                         .autoCreate(model.getAutoConfigurationEnabled())
+                        .groupingType(model.getGroupingType())
                         .autoConfigEnabled(model.getAutoConfigurationEnabled())
                         .build(),
                 applicationInsightsClient::createApplication);
@@ -324,8 +326,8 @@ public class HandlerHelper {
         List<ApplicationComponent> appComponents = listApplicationComponents(model.getResourceGroupName(), proxy, applicationInsightsClient);
 
         return appComponents.stream()
-            .map(applicationComponent -> applicationComponent.componentName())
-            .collect(Collectors.toList());
+                .map(applicationComponent -> applicationComponent.componentName())
+                .collect(Collectors.toList());
     }
 
     public static void updateApplicationInsightsApplication(
@@ -558,11 +560,11 @@ public class HandlerHelper {
 
         do {
             ListComponentsResponse response = proxy.injectCredentialsAndInvokeV2(ListComponentsRequest.builder()
-                    .resourceGroupName(resourceGroupName)
-                    .maxResults(MAX_COMPONENTS_PER_LIST_REQUEST)
-                    .nextToken(nextToken)
-                    .build(),
-                applicationInsightsClient::listComponents);
+                            .resourceGroupName(resourceGroupName)
+                            .maxResults(MAX_COMPONENTS_PER_LIST_REQUEST)
+                            .nextToken(nextToken)
+                            .build(),
+                    applicationInsightsClient::listComponents);
 
             if (response.applicationComponentList() != null) {
                 appComponents.addAll(response.applicationComponentList());
@@ -696,11 +698,11 @@ public class HandlerHelper {
             ApplicationInsightsClient applicationInsightsClient) {
         DescribeLogPatternResponse describeLogPatternResponse =
                 proxy.injectCredentialsAndInvokeV2(DescribeLogPatternRequest.builder()
-                        .resourceGroupName(model.getResourceGroupName())
-                        .patternSetName(patternSetName)
-                        .patternName(patternName)
-                        .build(),
-                applicationInsightsClient::describeLogPattern);
+                                .resourceGroupName(model.getResourceGroupName())
+                                .patternSetName(patternSetName)
+                                .patternName(patternName)
+                                .build(),
+                        applicationInsightsClient::describeLogPattern);
 
         LogPattern logPattern = pickLogPatternFromModel(patternSetName, patternName, model);
 
@@ -745,10 +747,10 @@ public class HandlerHelper {
             AmazonWebServicesClientProxy proxy,
             ApplicationInsightsClient applicationInsightsClient) {
         return proxy.injectCredentialsAndInvokeV2(DescribeComponentConfigurationRequest.builder()
-                        .resourceGroupName(model.getResourceGroupName())
-                        .componentName(componentNameOrARN)
-                        .build(),
-                applicationInsightsClient::describeComponentConfiguration)
+                                .resourceGroupName(model.getResourceGroupName())
+                                .componentName(componentNameOrARN)
+                                .build(),
+                        applicationInsightsClient::describeComponentConfiguration)
                 .monitor();
     }
 
