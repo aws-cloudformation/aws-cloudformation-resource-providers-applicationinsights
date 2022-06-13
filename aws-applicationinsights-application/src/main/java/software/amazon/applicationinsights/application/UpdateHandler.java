@@ -1,6 +1,5 @@
 package software.amazon.applicationinsights.application;
 
-import software.amazon.applicationinsights.application.StepWorkflow.AppCreationStepWorkflow;
 import software.amazon.applicationinsights.application.StepWorkflow.AppUpdateStepWorkflow;
 import software.amazon.applicationinsights.application.StepWorkflow.ComponentConfigurationStepWorkflow;
 import software.amazon.applicationinsights.application.StepWorkflow.ComponentCreationStepWorkflow;
@@ -13,58 +12,65 @@ import software.amazon.applicationinsights.application.StepWorkflow.LogPatternUp
 import software.amazon.applicationinsights.application.StepWorkflow.TagCreationStepWorkflow;
 import software.amazon.applicationinsights.application.StepWorkflow.TagDeletionStepWorkflow;
 import software.amazon.awssdk.services.applicationinsights.ApplicationInsightsClient;
-import software.amazon.awssdk.services.applicationinsights.model.DescribeApplicationResponse;
 import software.amazon.awssdk.services.applicationinsights.model.ResourceNotFoundException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.HandlerErrorCode;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
-import software.amazon.cloudformation.proxy.OperationStatus;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import static software.amazon.applicationinsights.application.Constants.APP_CREATION_FINISHED_LIFECYCLE;
-import static software.amazon.applicationinsights.application.Constants.CONFIGURATION_FINISHED_LIFECYCLE;
-import static software.amazon.applicationinsights.application.Constants.DEFAULT_TIER;
+import static software.amazon.applicationinsights.application.Constants.ACCOUNT_BASED_GROUPING_TYPE;
+import static software.amazon.applicationinsights.application.Constants.SHADOW_RG_PREFIX_ACCOUNT_BASED;
 import static software.amazon.applicationinsights.application.Constants.TRANSITION_CALLBACK_DELAY_SECONDS;
-import static software.amazon.applicationinsights.application.Constants.WAIT_CALLBACK_DELAY_SECONDS;
 
 public class UpdateHandler extends BaseHandler<CallbackContext> {
-    static final int UPDATE_STATUS_POLL_RETRIES = 60;
+
+    static final int UPDATE_STATUS_POLL_RETRIES = 1800;
     static final String UPDATE_TIMED_OUT_MESSAGE = "Timed out waiting for application update.";
 
     private final ApplicationInsightsClient applicationInsightsClient = ApplicationInsightsClient.create();
 
     @Override
-    public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
-        final AmazonWebServicesClientProxy proxy,
-        final ResourceHandlerRequest<ResourceModel> request,
-        final CallbackContext callbackContext,
-        final Logger logger) {
+    public ProgressEvent<ResourceModel, CallbackContext> handleRequest(final AmazonWebServicesClientProxy proxy,
+                                                                       final ResourceHandlerRequest<ResourceModel> request,
+                                                                       final CallbackContext callbackContext,
+                                                                       final Logger logger) {
 
         final ResourceModel model = request.getDesiredResourceState();
 
         logger.log(String.format("Update Handler called with resourceGroupName %s", model.getResourceGroupName()));
-        logger.log("Resource Model: " + model.toString());
+        logger.log("Resource Model: " + model);
 
         final ResourceModel previousModel = request.getPreviousResourceState();
-        if (previousModel != null && !model.getResourceGroupName().equals(previousModel.getResourceGroupName())) {
-            return ProgressEvent.failed(null, null, HandlerErrorCode.NotUpdatable,
-                    String.format("Application cannot be updated as the Resource Group Name was changed"));
-        }
+        logger.log("Previous Resource Model: " + previousModel);
 
         final CallbackContext newCallbackContext = callbackContext == null ?
                 CallbackContext.builder().stabilizationRetriesRemaining(UPDATE_STATUS_POLL_RETRIES).build() :
                 callbackContext;
 
         logger.log("Callback Context: " + newCallbackContext.toString());
+
+        // For Account based application AppInsights creates a Resource Group with prefix "ApplicationInsights-", accounting for it
+        if ((ACCOUNT_BASED_GROUPING_TYPE).equals(model.getGroupingType())) {
+
+            if (!model.getResourceGroupName().startsWith(SHADOW_RG_PREFIX_ACCOUNT_BASED)) {
+                model.setResourceGroupName(SHADOW_RG_PREFIX_ACCOUNT_BASED + model.getResourceGroupName());
+            }
+
+            if (!previousModel.getResourceGroupName().startsWith(SHADOW_RG_PREFIX_ACCOUNT_BASED)) {
+                previousModel.setResourceGroupName(SHADOW_RG_PREFIX_ACCOUNT_BASED + previousModel.getResourceGroupName());
+            }
+        }
+
+        if (previousModel != null && !model.getResourceGroupName().equals(previousModel.getResourceGroupName())) {
+            logger.log(String.format("Mismatch on resourceGroupName, Current model resourceGroupName is %s and previous model " +
+                            "resourceGroupName is ", model.getResourceGroupName(), previousModel.getResourceGroupName()));
+            return ProgressEvent.failed(null, null, HandlerErrorCode.NotUpdatable, "Application cannot be updated as the Resource Group Name was changed");
+        }
 
         model.setApplicationARN(String.format("arn:%s:applicationinsights:%s:%s:application/resource-group/%s",
                 request.getAwsPartition(),

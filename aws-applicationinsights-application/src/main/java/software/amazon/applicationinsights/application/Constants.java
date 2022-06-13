@@ -6,4 +6,6 @@ public class Constants {
     public static final String APP_CREATION_FINISHED_LIFECYCLE = "NOT_CONFIGURED";
     public static final String CONFIGURATION_FINISHED_LIFECYCLE = "ACTIVE";
     public static final String DEFAULT_TIER = "DEFAULT";
+    public static final String SHADOW_RG_PREFIX_ACCOUNT_BASED = "ApplicationInsights-";
+    public static final String ACCOUNT_BASED_GROUPING_TYPE = "ACCOUNT_BASED";
 }
